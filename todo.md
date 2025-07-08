@@ -16,12 +16,12 @@ Mark each task with `[x]` as you complete it.
 - [x] **S1.4** Add unit test ensuring `prtool --version` prints version string
 
 ## P2 — Configuration System
-- [ ] **S2.1** Define `Config` struct in `internal/config/config.go`
-- [ ] **S2.2** Implement YAML loader `LoadFromFile(path)`
-- [ ] **S2.3** Implement environment loader `LoadFromEnv()`
-- [ ] **S2.4** Bind Cobra flags to config fields
-- [ ] **S2.5** Implement `MergeConfig(cli, env, yaml)` with precedence CLI > env > YAML
-- [ ] **S2.6** Write unit tests covering precedence matrix
+- [x] **S2.1** Define `Config` struct in `internal/config/config.go`
+- [x] **S2.2** Implement YAML loader `LoadFromFile(path)`
+- [x] **S2.3** Implement environment loader `LoadFromEnv()`
+- [x] **S2.4** Bind Cobra flags to config fields
+- [x] **S2.5** Implement `MergeConfig(cli, env, yaml)` with precedence CLI > env > YAML
+- [x] **S2.6** Write unit tests covering precedence matrix
 
 ## P3 — Time‑Range Parsing
 - [ ] **S3.1** Create `ParseRelativeDuration("-7d")` utility
