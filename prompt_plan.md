@@ -37,7 +37,7 @@ Each **chunk** delivers one phase. Each chunk is decomposed into **atomic steps*
 ### Chunk 0 (P0) – Repo & Tooling
 
 - **S0.1** `git init` new repo, commit `.gitignore` for Go
-- **S0.2** Add `go.mod` (module `github.com/yourorg/prtool`) & blank `main.go` with `package main` + empty `func main()`
+- **S0.2** Add `go.mod` (module `github.com/willis7/prtool`) & blank `main.go` with `package main` + empty `func main()`
 - **S0.3** Add `make test` target and CI stub (GitHub Actions YAML) that runs `go test ./...`
 
 ### Chunk 1 (P1) – CLI Skeleton
@@ -141,7 +141,7 @@ Below are **15 prompts** (one per chunk, plus a final wiring prompt). Paste each
 You are implementing `prtool`, a Go CLI.
 Objective: create an initial repository scaffold that compiles and is testable.
 Tasks:
-1. Initialise a Go module `github.com/yourorg/prtool`.
+1. Initialise a Go module `github.com/willis7/prtool`.
 2. Add `main.go` with an empty `func main()`.
 3. Add `.gitignore` for Go.
 4. Add a basic `Makefile` with `test` target.

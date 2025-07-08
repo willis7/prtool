@@ -1,6 +1,6 @@
 package main
 
-import "github.com/yourorg/prtool/cmd"
+import "github.com/willis7/prtool/cmd"
 
 func main() {
 	cmd.Execute()

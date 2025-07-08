@@ -6,7 +6,7 @@ Mark each task with `[x]` as you complete it.
 
 ## P0 — Repository & Tooling
 - [x] **S0.1** Initialize Git repository and add `.gitignore` for Go
-- [x] **S0.2** Create `go.mod` (module `github.com/yourorg/prtool`) and minimal `main.go`
+- [x] **S0.2** Create `go.mod` (module `github.com/willis7/prtool`) and minimal `main.go`
 - [x] **S0.3** Add `Makefile` with `test` target and GitHub Actions CI workflow running `make test`
 
 ## P1 — CLI Skeleton (Cobra)
