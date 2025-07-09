@@ -39,7 +39,7 @@ func TestRender(t *testing.T) {
 		},
 	}
 
-	got := Render(meta, prs)
+	got := Render(meta, prs, "This is a placeholder for the LLM-generated summary.")
 
 	goldenFile := filepath.Join("testdata", "expected.md")
 	expected, err := os.ReadFile(goldenFile)

@@ -16,16 +16,16 @@ type Metadata struct {
 	Date      time.Time
 }
 
-// Render generates a Markdown string from metadata and PRs.
-func Render(meta Metadata, prs []model.PR) string {
+// Render generates a Markdown string from metadata, PRs, and LLM summary.
+func Render(meta Metadata, prs []model.PR, summary string) string {
 	var builder strings.Builder
 
 	// Metadata block
 	builder.WriteString(fmt.Sprintf("---\nTimeframe: %s\nScope: %s\nPRCount: %d\nDate: %s\n---\n\n", meta.Timeframe, meta.Scope, meta.PRCount, meta.Date.Format("2006-01-02")))
 
-	// Placeholder for LLM summary
+	// LLM summary
 	builder.WriteString("## Pull Request Summary\n\n")
-	builder.WriteString("This is a placeholder for the LLM-generated summary.\n\n")
+	builder.WriteString(summary + "\n\n")
 
 	// List of PRs (for dry-run or debugging)
 	if len(prs) > 0 {

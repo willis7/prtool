@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-github/v55/github"
 	"github.com/willis7/prtool/internal/config"
 	"github.com/willis7/prtool/internal/gh"
+	"github.com/willis7/prtool/internal/llm"
 	"github.com/willis7/prtool/internal/model"
 )
 
@@ -34,7 +35,7 @@ func TestFetcher_Fetch_Success(t *testing.T) {
 		},
 	}
 
-	fetcher := NewFetcher(mockClient)
+	fetcher := NewFetcher(mockClient, &llm.StubLLM{})
 
 	gotPRs, err := fetcher.Fetch(cfg)
 
@@ -67,7 +68,7 @@ func TestFetcher_Fetch_ErrorResolvingRepos(t *testing.T) {
 		},
 	}
 
-	fetcher := NewFetcher(mockClient)
+	fetcher := NewFetcher(mockClient, &llm.StubLLM{})
 
 	_, err := fetcher.Fetch(cfg)
 
@@ -89,7 +90,7 @@ func TestFetcher_Fetch_ErrorParsingSince(t *testing.T) {
 		},
 	}
 
-	fetcher := NewFetcher(mockClient)
+	fetcher := NewFetcher(mockClient, &llm.StubLLM{})
 
 	_, err := fetcher.Fetch(cfg)
 
@@ -114,7 +115,7 @@ func TestFetcher_Fetch_ErrorListingPRs(t *testing.T) {
 		},
 	}
 
-	fetcher := NewFetcher(mockClient)
+	fetcher := NewFetcher(mockClient, &llm.StubLLM{})
 
 	gotPRs, err := fetcher.Fetch(cfg)
 

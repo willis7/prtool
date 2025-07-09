@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/willis7/prtool/internal/config"
 	"github.com/willis7/prtool/internal/gh"
+	"github.com/willis7/prtool/internal/llm"
 	"github.com/willis7/prtool/internal/render"
 	"github.com/willis7/prtool/internal/service"
 )
@@ -37,14 +38,23 @@ var rootCmd = &cobra.Command{
 		envConfig := config.LoadFromEnv()
 		finalConfig := config.MergeConfig(cliConfig, envConfig, fileConfig)
 
-		// Initialize GitHub client
+		// Initialize GitHub client and LLM client
 		ghClient := gh.NewRestClient(finalConfig.GitHubToken)
-		fetcher := service.NewFetcher(ghClient)
+		llmClient := &llm.StubLLM{Summary: "This is a stub LLM summary."}
+		fetcher := service.NewFetcher(ghClient, llmClient)
 
 		// Fetch PRs
 		prs, err := fetcher.Fetch(finalConfig)
 		if err != nil {
 			return fmt.Errorf("failed to fetch pull requests: %w", err)
+		}
+
+		var summary string
+		if !finalConfig.DryRun {
+			summary, err = fetcher.GenerateSummary(prs)
+			if err != nil {
+				return fmt.Errorf("failed to generate summary: %w", err)
+			}
 		}
 
 		if finalConfig.DryRun {
@@ -79,7 +89,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Render Markdown
-		markdownOutput := render.Render(meta, prs)
+		markdownOutput := render.Render(meta, prs, summary)
 
 		// Write to output
 		if finalConfig.Output != "" {
