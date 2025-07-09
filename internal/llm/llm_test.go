@@ -2,6 +2,7 @@ package llm
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -308,4 +309,127 @@ func TestBuildContext_Integration(t *testing.T) {
 	if len(context) < 100 {
 		t.Errorf("Context is too short (%d chars), might not provide enough information", len(context))
 	}
+}
+
+func TestOpenAILLM_NewOpenAILLM(t *testing.T) {
+	tests := []struct {
+		name     string
+		apiKey   string
+		model    string
+		expected string
+	}{
+		{
+			name:     "default model when empty",
+			apiKey:   "test-key",
+			model:    "",
+			expected: "gpt-3.5-turbo",
+		},
+		{
+			name:     "custom model",
+			apiKey:   "test-key",
+			model:    "gpt-4",
+			expected: "gpt-4",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			llm := NewOpenAILLM(tt.apiKey, tt.model)
+			if llm.model != tt.expected {
+				t.Errorf("NewOpenAILLM() model = %v, want %v", llm.model, tt.expected)
+			}
+			if llm.client == nil {
+				t.Error("NewOpenAILLM() client should not be nil")
+			}
+		})
+	}
+}
+
+func TestOllamaLLM_NewOllamaLLM(t *testing.T) {
+	tests := []struct {
+		name          string
+		baseURL       string
+		model         string
+		expectedURL   string
+		expectedModel string
+	}{
+		{
+			name:          "defaults when empty",
+			baseURL:       "",
+			model:         "",
+			expectedURL:   "http://localhost:11434",
+			expectedModel: "llama3.2",
+		},
+		{
+			name:          "custom values",
+			baseURL:       "http://custom:8080",
+			model:         "custom-model",
+			expectedURL:   "http://custom:8080",
+			expectedModel: "custom-model",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			llm := NewOllamaLLM(tt.baseURL, tt.model)
+			if llm.baseURL != tt.expectedURL {
+				t.Errorf("NewOllamaLLM() baseURL = %v, want %v", llm.baseURL, tt.expectedURL)
+			}
+			if llm.model != tt.expectedModel {
+				t.Errorf("NewOllamaLLM() model = %v, want %v", llm.model, tt.expectedModel)
+			}
+			if llm.client == nil {
+				t.Error("NewOllamaLLM() client should not be nil")
+			}
+		})
+	}
+}
+
+// TestOpenAILLM_Summarise_Integration is a smoke test that requires OPENAI_KEY env var
+// Run with: OPENAI_KEY=your-key go test -v -run TestOpenAILLM_Summarise_Integration
+func TestOpenAILLM_Summarise_Integration(t *testing.T) {
+	apiKey := os.Getenv("OPENAI_KEY")
+	if apiKey == "" {
+		t.Skip("Skipping OpenAI integration test: OPENAI_KEY not set")
+	}
+
+	llm := NewOpenAILLM(apiKey, "gpt-3.5-turbo")
+
+	// Create some test PR data
+	testTime := time.Now().Add(-24 * time.Hour)
+	prs := []*model.PR{
+		{
+			Title:      "Add user authentication",
+			Author:     "alice",
+			Repository: "myapp",
+			MergedAt:   &testTime,
+			Labels:     []string{"feature", "security"},
+			Body:       "Implements JWT-based authentication for the user login system.",
+		},
+		{
+			Title:      "Fix memory leak in worker pool",
+			Author:     "bob",
+			Repository: "myapp",
+			MergedAt:   &testTime,
+			Labels:     []string{"bugfix", "performance"},
+			Body:       "Resolves goroutine leak that was causing memory consumption to grow over time.",
+		},
+	}
+
+	context := BuildContext(prs)
+	summary, err := llm.Summarise(context)
+
+	if err != nil {
+		t.Fatalf("OpenAI integration test failed: %v", err)
+	}
+
+	if summary == "" {
+		t.Error("Expected non-empty summary from OpenAI")
+	}
+
+	if len(summary) < 50 {
+		t.Errorf("Expected longer summary, got: %s", summary)
+	}
+
+	t.Logf("OpenAI summary: %s", summary)
 }

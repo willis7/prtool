@@ -67,11 +67,11 @@ Mark each task with `[x]` as you complete it.
 
 ## P9 — LLM Integration
 
-- [ ] **S9.1** OpenAI provider using `go-openai`
-- [ ] **S9.2** Ollama provider via local HTTP API
-- [ ] **S9.3** Provider factory based on config
-- [ ] **S9.4** End‑to‑end flow: PRs → context → LLM → Markdown
-- [ ] **S9.5** Integration test with stubs
+- [x] **S9.1** OpenAI provider using `go-openai`
+- [x] **S9.2** Ollama provider via local HTTP API
+- [x] **S9.3** Provider factory based on config
+- [x] **S9.4** End‑to‑end flow: PRs → context → LLM → Markdown
+- [x] **S9.5** Integration test with stubs
 
 ## P10 — Ancillary Commands
 

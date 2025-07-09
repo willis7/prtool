@@ -294,9 +294,6 @@ func writeToFile(filename, content string) error {
 
 // createLLMClient creates an LLM client based on configuration
 func createLLMClient(cfg *config.Config) llm.LLM {
-	// For now, we only have the stub implementation
-	// In the next iteration, we'll add OpenAI and Ollama implementations
-
 	if cfg.LLMProvider == "" {
 		// Default to stub for testing
 		return llm.NewStubLLM()
@@ -305,8 +302,17 @@ func createLLMClient(cfg *config.Config) llm.LLM {
 	switch cfg.LLMProvider {
 	case "stub":
 		return llm.NewStubLLM()
+	case "openai":
+		if cfg.LLMAPIKey == "" {
+			fmt.Fprintf(os.Stderr, "Warning: OpenAI API key not provided, falling back to stub\n")
+			return llm.NewStubLLM()
+		}
+		return llm.NewOpenAILLM(cfg.LLMAPIKey, cfg.LLMModel)
+	case "ollama":
+		return llm.NewOllamaLLM("", cfg.LLMModel) // Use default localhost URL
 	default:
 		// Unsupported provider, return stub as fallback
+		fmt.Fprintf(os.Stderr, "Warning: Unknown LLM provider '%s', falling back to stub\n", cfg.LLMProvider)
 		return llm.NewStubLLM()
 	}
 }

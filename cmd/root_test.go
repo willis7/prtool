@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -355,46 +356,92 @@ func TestDryRunIntegration(t *testing.T) {
 
 func TestCreateLLMClient(t *testing.T) {
 	tests := []struct {
-		name         string
-		cfg          *config.Config
-		expectedType string
+		name     string
+		cfg      *config.Config
+		expected string // Expected LLM type
 	}{
 		{
-			name:         "empty provider defaults to stub",
-			cfg:          &config.Config{},
-			expectedType: "*llm.StubLLM",
+			name: "empty provider defaults to stub",
+			cfg: &config.Config{
+				LLMProvider: "",
+			},
+			expected: "*llm.StubLLM",
 		},
 		{
-			name: "stub provider explicitly",
+			name: "stub provider",
 			cfg: &config.Config{
 				LLMProvider: "stub",
 			},
-			expectedType: "*llm.StubLLM",
+			expected: "*llm.StubLLM",
 		},
 		{
-			name: "unsupported provider falls back to stub",
+			name: "openai provider with key",
 			cfg: &config.Config{
-				LLMProvider: "unsupported",
+				LLMProvider: "openai",
+				LLMAPIKey:   "test-key",
+				LLMModel:    "gpt-4",
 			},
-			expectedType: "*llm.StubLLM",
+			expected: "*llm.OpenAILLM",
+		},
+		{
+			name: "openai provider without key falls back to stub",
+			cfg: &config.Config{
+				LLMProvider: "openai",
+				LLMAPIKey:   "",
+			},
+			expected: "*llm.StubLLM",
+		},
+		{
+			name: "ollama provider",
+			cfg: &config.Config{
+				LLMProvider: "ollama",
+				LLMModel:    "llama3.2",
+			},
+			expected: "*llm.OllamaLLM",
+		},
+		{
+			name: "unknown provider falls back to stub",
+			cfg: &config.Config{
+				LLMProvider: "unknown",
+			},
+			expected: "*llm.StubLLM",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Capture stderr to check warning messages
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+
 			client := createLLMClient(tt.cfg)
 
-			if client == nil {
-				t.Error("Expected non-nil LLM client")
+			// Restore stderr
+			w.Close()
+			os.Stderr = oldStderr
+
+			// Read captured output
+			buf := make([]byte, 1024)
+			n, _ := r.Read(buf)
+			stderr := string(buf[:n])
+
+			// Check the type of returned client
+			clientType := fmt.Sprintf("%T", client)
+			if clientType != tt.expected {
+				t.Errorf("createLLMClient() = %v, want %v", clientType, tt.expected)
 			}
 
-			// Test that the client can generate a summary
-			summary, err := client.Summarise("Test context")
-			if err != nil {
-				t.Errorf("Unexpected error from LLM client: %v", err)
+			// Check warning messages for fallback cases
+			if tt.cfg.LLMProvider == "openai" && tt.cfg.LLMAPIKey == "" {
+				if !strings.Contains(stderr, "Warning: OpenAI API key not provided") {
+					t.Error("Expected warning about missing OpenAI API key")
+				}
 			}
-			if summary == "" {
-				t.Error("Expected non-empty summary")
+			if tt.cfg.LLMProvider == "unknown" {
+				if !strings.Contains(stderr, "Warning: Unknown LLM provider") {
+					t.Error("Expected warning about unknown provider")
+				}
 			}
 		})
 	}
