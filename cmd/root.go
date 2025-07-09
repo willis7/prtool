@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -20,22 +22,23 @@ var version = "dev"
 
 // CLI flags
 var (
-	cfgFile     string
-	githubToken string
-	org         string
-	team        string
-	user        string
-	repo        string
-	since       string
-	llmProvider string
-	llmAPIKey   string
-	llmModel    string
-	prompt      string
-	output      string
-	dryRun      bool
-	verbose     bool
-	ci          bool
-	logFile     string
+	cfgFile      string
+	githubToken  string
+	org          string
+	team         string
+	user         string
+	repo         string
+	since        string
+	llmProvider  string
+	llmAPIKey    string
+	llmModel     string
+	prompt       string
+	output       string
+	dryRun       bool
+	verbose      bool
+	ci           bool
+	logFile      string
+	versionCheck bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -84,6 +87,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Skip LLM processing and show PR data")
 	rootCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	rootCmd.Flags().BoolVar(&ci, "ci", false, "Non-interactive mode for CI")
+	rootCmd.Flags().BoolVar(&versionCheck, "version-check", false, "Check for latest version on GitHub")
 	rootCmd.Flags().StringVar(&logFile, "log-file", "", "Log file path")
 
 	// Handle version flag and basic command execution
@@ -91,6 +95,15 @@ func init() {
 		versionFlag, _ := cmd.Flags().GetBool("version")
 		if versionFlag {
 			fmt.Println(version)
+			return
+		}
+
+		// Handle version check flag
+		if versionCheck {
+			if err := checkLatestVersion(); err != nil {
+				fmt.Fprintf(os.Stderr, "Error checking version: %v\n", err)
+				os.Exit(1)
+			}
 			return
 		}
 
@@ -315,4 +328,76 @@ func createLLMClient(cfg *config.Config) llm.LLM {
 		fmt.Fprintf(os.Stderr, "Warning: Unknown LLM provider '%s', falling back to stub\n", cfg.LLMProvider)
 		return llm.NewStubLLM()
 	}
+}
+
+// GitHubRelease represents a GitHub release response
+type GitHubRelease struct {
+	TagName string `json:"tag_name"`
+	Name    string `json:"name"`
+	HTMLURL string `json:"html_url"`
+}
+
+// VersionChecker interface for testing
+type VersionChecker interface {
+	GetLatestRelease() (*GitHubRelease, error)
+}
+
+// RealVersionChecker implements VersionChecker using GitHub API
+type RealVersionChecker struct {
+	client *http.Client
+}
+
+// NewRealVersionChecker creates a new real version checker
+func NewRealVersionChecker() *RealVersionChecker {
+	return &RealVersionChecker{
+		client: &http.Client{Timeout: 10 * time.Second},
+	}
+}
+
+// GetLatestRelease fetches the latest release from GitHub
+func (r *RealVersionChecker) GetLatestRelease() (*GitHubRelease, error) {
+	url := "https://api.github.com/repos/willis7/prtool/releases/latest"
+
+	resp, err := r.client.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch latest release: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
+	}
+
+	var release GitHubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return nil, fmt.Errorf("failed to decode release response: %w", err)
+	}
+
+	return &release, nil
+}
+
+var versionChecker VersionChecker = NewRealVersionChecker()
+
+// checkLatestVersion checks for the latest version on GitHub
+func checkLatestVersion() error {
+	fmt.Printf("Current version: %s\n", version)
+	fmt.Println("Checking for latest version...")
+
+	release, err := versionChecker.GetLatestRelease()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Latest version: %s\n", release.TagName)
+
+	if version == "dev" {
+		fmt.Println("You are running a development version.")
+	} else if release.TagName != version && release.TagName != "v"+version {
+		fmt.Printf("A newer version is available: %s\n", release.Name)
+		fmt.Printf("Download it from: %s\n", release.HTMLURL)
+	} else {
+		fmt.Println("You are running the latest version!")
+	}
+
+	return nil
 }

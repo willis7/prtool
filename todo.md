@@ -75,8 +75,8 @@ Mark each task with `[x]` as you complete it.
 
 ## P10 — Ancillary Commands
 
-- [ ] **S10.1** Implement `prtool init` to generate annotated YAML config
-- [ ] **S10.2** Add `--version-check` flag querying GitHub releases (mocked tests)
+- [x] **S10.1** Implement `prtool init` to generate annotated YAML config
+- [x] **S10.2** Add `--version-check` flag querying GitHub releases (mocked tests)
 
 ## P11 — Polish & CI Enhancements
 

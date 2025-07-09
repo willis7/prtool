@@ -672,3 +672,200 @@ func TestEndToEndWithLLM(t *testing.T) {
 
 	t.Logf("Successfully generated %d-character markdown with LLM summary", len(markdown))
 }
+
+// MockVersionChecker for testing
+type MockVersionChecker struct {
+	release *GitHubRelease
+	err     error
+}
+
+func (m *MockVersionChecker) GetLatestRelease() (*GitHubRelease, error) {
+	return m.release, m.err
+}
+
+func TestVersionCheck(t *testing.T) {
+	// Save original version checker
+	originalChecker := versionChecker
+	defer func() { versionChecker = originalChecker }()
+
+	tests := []struct {
+		name           string
+		currentVersion string
+		mockRelease    *GitHubRelease
+		mockError      error
+		expectError    bool
+		expectedOutput []string
+	}{
+		{
+			name:           "latest version available",
+			currentVersion: "v1.0.0",
+			mockRelease: &GitHubRelease{
+				TagName: "v1.1.0",
+				Name:    "Version 1.1.0",
+				HTMLURL: "https://github.com/willis7/prtool/releases/tag/v1.1.0",
+			},
+			expectError: false,
+			expectedOutput: []string{
+				"Current version: v1.0.0",
+				"Latest version: v1.1.0",
+				"A newer version is available",
+				"https://github.com/willis7/prtool/releases/tag/v1.1.0",
+			},
+		},
+		{
+			name:           "up to date version",
+			currentVersion: "v1.0.0",
+			mockRelease: &GitHubRelease{
+				TagName: "v1.0.0",
+				Name:    "Version 1.0.0",
+				HTMLURL: "https://github.com/willis7/prtool/releases/tag/v1.0.0",
+			},
+			expectError: false,
+			expectedOutput: []string{
+				"Current version: v1.0.0",
+				"Latest version: v1.0.0",
+				"You are running the latest version!",
+			},
+		},
+		{
+			name:           "development version",
+			currentVersion: "dev",
+			mockRelease: &GitHubRelease{
+				TagName: "v1.0.0",
+				Name:    "Version 1.0.0",
+				HTMLURL: "https://github.com/willis7/prtool/releases/tag/v1.0.0",
+			},
+			expectError: false,
+			expectedOutput: []string{
+				"Current version: dev",
+				"Latest version: v1.0.0",
+				"You are running a development version",
+			},
+		},
+		{
+			name:           "API error",
+			currentVersion: "v1.0.0",
+			mockRelease:    nil,
+			mockError:      fmt.Errorf("API rate limit exceeded"),
+			expectError:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set up mock
+			versionChecker = &MockVersionChecker{
+				release: tt.mockRelease,
+				err:     tt.mockError,
+			}
+
+			// Set current version
+			originalVersion := version
+			version = tt.currentVersion
+			defer func() { version = originalVersion }()
+
+			// Capture output
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+
+			// Run version check
+			err := checkLatestVersion()
+
+			// Restore stdout
+			w.Close()
+			os.Stdout = oldStdout
+
+			// Read captured output
+			buf := make([]byte, 1024)
+			n, _ := r.Read(buf)
+			output := string(buf[:n])
+
+			// Check error expectation
+			if tt.expectError && err == nil {
+				t.Error("Expected an error but got none")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Check output contains expected strings
+			if !tt.expectError {
+				for _, expected := range tt.expectedOutput {
+					if !strings.Contains(output, expected) {
+						t.Errorf("Expected output to contain '%s', got: %s", expected, output)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestVersionCheckCommand(t *testing.T) {
+	// Save original version checker
+	originalChecker := versionChecker
+	defer func() { versionChecker = originalChecker }()
+
+	// Set up mock
+	versionChecker = &MockVersionChecker{
+		release: &GitHubRelease{
+			TagName: "v1.0.0",
+			Name:    "Version 1.0.0",
+			HTMLURL: "https://github.com/willis7/prtool/releases/tag/v1.0.0",
+		},
+	}
+
+	// Create command with version-check flag
+	cmd := rootCmd
+	cmd.SetArgs([]string{"--version-check"})
+
+	// Capture output
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	// Execute command
+	err := cmd.Execute()
+
+	// Restore stdout
+	w.Close()
+	os.Stdout = oldStdout
+
+	// Check that it executed without error
+	if err != nil {
+		t.Errorf("version-check command failed: %v", err)
+	}
+
+	// Read output
+	buf := make([]byte, 1024)
+	n, _ := r.Read(buf)
+	output := string(buf[:n])
+
+	// Verify output contains version check information
+	if !strings.Contains(output, "Current version:") {
+		t.Error("Expected version check output")
+	}
+}
+
+func TestRealVersionChecker(t *testing.T) {
+	// This is an integration test that can be skipped if GitHub is unreachable
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	checker := NewRealVersionChecker()
+
+	// Test timeout is reasonable
+	if checker.client.Timeout != 10*time.Second {
+		t.Errorf("Expected 10 second timeout, got %v", checker.client.Timeout)
+	}
+
+	// We can't easily test the actual API call without hitting GitHub,
+	// but we can test that the method exists and returns the right types
+	_, err := checker.GetLatestRelease()
+	// Note: This might fail if GitHub is unreachable or rate-limited,
+	// but it tests the method signature and basic functionality
+	if err != nil {
+		t.Logf("GitHub API call failed (this may be expected): %v", err)
+	}
+}
