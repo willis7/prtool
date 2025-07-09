@@ -3,9 +3,16 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/willis7/prtool/internal/config"
+	"github.com/willis7/prtool/internal/gh"
+	"github.com/willis7/prtool/internal/model"
+	"github.com/willis7/prtool/internal/render"
+	"github.com/willis7/prtool/internal/scope"
+	"github.com/willis7/prtool/internal/service"
 )
 
 var version = "dev"
@@ -86,8 +93,61 @@ func init() {
 			return
 		}
 
-		// For now, just show help if no version flag
-		cmd.Help()
+		// Load configuration
+		cfg, err := GetConfig()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Validate configuration
+		if err := validateConfig(cfg); err != nil {
+			fmt.Fprintf(os.Stderr, "Configuration error: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Create GitHub client
+		ghClient, err := gh.NewRestClient(cfg.GitHubToken)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create GitHub client: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Fetch PRs
+		prs, err := service.Fetch(cfg, ghClient)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to fetch PRs: %v\n", err)
+			os.Exit(1)
+		}
+
+		if cfg.Verbose {
+			fmt.Fprintf(os.Stderr, "Fetched %d pull requests\n", len(prs))
+		}
+
+		// Handle dry-run mode
+		if cfg.DryRun {
+			fmt.Print(render.RenderTable(prs))
+			return
+		}
+
+		// Generate metadata
+		metadata := generateMetadata(cfg, prs)
+
+		// Render markdown
+		markdownOutput := render.Render(metadata, prs)
+
+		// Output to file or stdout
+		if cfg.Output != "" {
+			if err := writeToFile(cfg.Output, markdownOutput); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to write output file: %v\n", err)
+				os.Exit(1)
+			}
+			if cfg.Verbose {
+				fmt.Fprintf(os.Stderr, "Output written to: %s\n", cfg.Output)
+			}
+		} else {
+			fmt.Print(markdownOutput)
+		}
 	}
 }
 
@@ -130,4 +190,82 @@ func GetConfig() (*config.Config, error) {
 	merged := config.MergeConfig(cliConfig, envConfig, yamlConfig)
 
 	return merged, nil
+}
+
+// validateConfig validates the configuration
+func validateConfig(cfg *config.Config) error {
+	if cfg.GitHubToken == "" {
+		return fmt.Errorf("GitHub token is required")
+	}
+
+	// Validate scope using the scope package
+	if err := scope.ValidateScope(cfg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// generateMetadata creates metadata for the report
+func generateMetadata(cfg *config.Config, prs []*model.PR) render.Metadata {
+	// Determine scope type and value
+	var scopeType, scopeValue string
+	if cfg.Org != "" {
+		scopeType, scopeValue = "organization", cfg.Org
+	} else if cfg.Team != "" {
+		scopeType, scopeValue = "team", cfg.Team
+	} else if cfg.User != "" {
+		scopeType, scopeValue = "user", cfg.User
+	} else if cfg.Repo != "" {
+		scopeType, scopeValue = "repository", cfg.Repo
+	}
+
+	// Collect unique repositories
+	repoSet := make(map[string]bool)
+	for _, pr := range prs {
+		if pr.Repository != "" {
+			repoSet[pr.Repository] = true
+		}
+	}
+
+	var repositories []string
+	for repo := range repoSet {
+		repositories = append(repositories, repo)
+	}
+
+	// Determine since value
+	since := cfg.Since
+	if since == "" {
+		since = "-7d" // default
+	}
+
+	return render.Metadata{
+		GeneratedAt:  time.Now().UTC(),
+		Scope:        scopeType,
+		ScopeValue:   scopeValue,
+		Since:        since,
+		TotalPRs:     len(prs),
+		Repositories: repositories,
+		LLMProvider:  cfg.LLMProvider,
+		LLMModel:     cfg.LLMModel,
+		Summary:      "", // Will be filled by LLM in later iterations
+	}
+}
+
+// writeToFile writes content to a file
+func writeToFile(filename, content string) error {
+	// Create directory if it doesn't exist
+	dir := filepath.Dir(filename)
+	if dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+	}
+
+	// Write file
+	if err := os.WriteFile(filename, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write file %s: %w", filename, err)
+	}
+
+	return nil
 }

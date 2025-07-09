@@ -54,10 +54,10 @@ Mark each task with `[x]` as you complete it.
 
 ## P7 — Output Layer
 
-- [ ] **S7.1** Create Markdown renderer with metadata header
-- [ ] **S7.2** Write output to stdout or file (`--output` flag)
-- [ ] **S7.3** Implement `--dry-run` & `--verbose` behaviour
-- [ ] **S7.4** Unit tests (golden files)
+- [x] **S7.1** Create Markdown renderer with metadata header
+- [x] **S7.2** Write output to stdout or file (`--output` flag)
+- [x] **S7.3** Implement `--dry-run` & `--verbose` behaviour
+- [x] **S7.4** Unit tests (golden files)
 
 ## P8 — LLM Abstraction
 
