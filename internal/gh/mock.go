@@ -95,9 +95,14 @@ func (m *MockClient) ListPRs(repo string, since time.Time) ([]*model.PR, error) 
 		return nil, fmt.Errorf("repository name is required")
 	}
 
-	// Filter PRs by since date (only return PRs merged after since)
+	// Filter PRs by repository and since date
 	var filteredPRs []*model.PR
 	for _, pr := range m.MockPRs {
+		// Filter by repository name (skip if Repository field is empty - for backward compatibility)
+		if pr.Repository != "" && pr.Repository != repo {
+			continue
+		}
+		// Filter by since date (only return PRs merged after since)
 		if pr.MergedAt != nil && pr.MergedAt.After(since) {
 			filteredPRs = append(filteredPRs, pr)
 		}

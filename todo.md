@@ -47,10 +47,10 @@ Mark each task with `[x]` as you complete it.
 
 ## P6 — PR Retrieval
 
-- [ ] **S6.1** Define `model.PR` struct
-- [ ] **S6.2** Implement `FetchPRs` filtering by `since` and `merged`
-- [ ] **S6.3** Print PR table when `--dry-run`
-- [ ] **S6.4** Integration tests with `MockClient`
+- [x] **S6.1** Define `model.PR` struct
+- [x] **S6.2** Implement `FetchPRs` filtering by `since` and `merged`
+- [x] **S6.3** Print PR table when `--dry-run`
+- [x] **S6.4** Integration tests with `MockClient`
 
 ## P7 — Output Layer
 
