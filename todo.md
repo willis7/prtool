@@ -28,8 +28,8 @@ Mark each task with `[x]` as you complete it.
 
 ## P3 — Time‑Range Parsing
 
-- [ ] **S3.1** Create `ParseRelativeDuration("-7d")` utility
-- [ ] **S3.2** Add edge‑case tests (valid/invalid inputs)
+- [x] **S3.1** Create `ParseRelativeDuration("-7d")` utility
+- [x] **S3.2** Add edge‑case tests (valid/invalid inputs)
 
 ## P4 — GitHub Client
 
