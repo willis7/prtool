@@ -28,11 +28,11 @@ Mark each task with `[x]` as you complete it.
 - [x] **S3.2** Add edge‑case tests (valid/invalid inputs)
 
 ## P4 — GitHub Client
-- [ ] **S4.1** Define `GitHubClient` interface (`ListRepos`, `ListPRs`)
-- [ ] **S4.2** Implement `RestClient` using PAT auth via `go-github`
-- [ ] **S4.3** Factory to inject client in `internal/gh`
-- [ ] **S4.4** Create `MockClient` for tests
-- [ ] **S4.5** Write auth‑failure unit tests
+- [x] **S4.1** Define `GitHubClient` interface (`ListRepos`, `ListPRs`)
+- [x] **S4.2** Implement `RestClient` using PAT auth via `go-github`
+- [x] **S4.3** Factory to inject client in `internal/gh`
+- [x] **S4.4** Create `MockClient` for tests
+- [x] **S4.5** Write auth‑failure unit tests
 - [ ] **S4.6** Implement retry logic for transient network/API errors
 
 ## P5 — Scope Resolution
