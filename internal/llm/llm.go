@@ -1,8 +1,10 @@
 package llm
 
+import "context"
+
 // LLM defines the interface for interacting with Language Model providers.
 type LLM interface {
-	Summarise(context string) (string, error)
+	Summarise(ctx context.Context, context string) (string, error)
 }
 
 // StubLLM is a mock implementation of the LLM interface for testing.
@@ -12,7 +14,7 @@ type StubLLM struct {
 }
 
 // Summarise returns a fixed summary or an error if configured.
-func (s *StubLLM) Summarise(context string) (string, error) {
+func (s *StubLLM) Summarise(ctx context.Context, context string) (string, error) {
 	if s.Err != nil {
 		return "", s.Err
 	}

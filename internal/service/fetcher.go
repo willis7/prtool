@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -73,5 +74,5 @@ func (f *Fetcher) GenerateSummary(prs []model.PR) (string, error) {
 		contextBuilder.WriteString("---\n")
 	}
 
-	return f.LLMClient.Summarise(contextBuilder.String())
+	return f.LLMClient.Summarise(context.Background(), contextBuilder.String())
 }

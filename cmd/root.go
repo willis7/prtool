@@ -40,7 +40,16 @@ var rootCmd = &cobra.Command{
 
 		// Initialize GitHub client and LLM client
 		ghClient := gh.NewRestClient(finalConfig.GitHubToken)
-		llmClient := &llm.StubLLM{Summary: "This is a stub LLM summary."}
+
+		var llmClient llm.LLM
+		switch finalConfig.LLMProvider {
+		case "openai":
+			llmClient = llm.NewOpenAIClient(finalConfig.LLMAPIKey, finalConfig.LLMModel)
+		case "ollama":
+			llmClient = llm.NewOllamaClient("http://localhost:11434", finalConfig.LLMModel)
+		default:
+			return fmt.Errorf("unsupported LLM provider: %s", finalConfig.LLMProvider)
+		}
 		fetcher := service.NewFetcher(ghClient, llmClient)
 
 		// Fetch PRs

@@ -15,6 +15,7 @@ require (
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/sashabaranov/go-openai v1.28.0 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 )
