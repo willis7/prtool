@@ -28,7 +28,7 @@ func TestNewRestClient(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client, err := NewRestClient(tt.token)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("Expected error but got none")
@@ -144,16 +144,16 @@ func TestMockClient_ListRepos(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := NewMockClient()
 			mock.SetMockRepos(tt.mockRepos)
-			
+
 			if tt.authError != nil {
 				mock.SetAuthError(tt.authError)
 			}
 			if tt.repoError != nil {
 				mock.SetRepoError(tt.repoError)
 			}
-			
+
 			repos, err := mock.ListRepos(tt.scope)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("Expected error but got none")
@@ -178,7 +178,7 @@ func TestMockClient_ListPRs(t *testing.T) {
 	now := time.Now()
 	yesterday := now.AddDate(0, 0, -1)
 	lastWeek := now.AddDate(0, 0, -7)
-	
+
 	tests := []struct {
 		name        string
 		repo        string
@@ -277,16 +277,16 @@ func TestMockClient_ListPRs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := NewMockClient()
 			mock.SetMockPRs(tt.mockPRs)
-			
+
 			if tt.authError != nil {
 				mock.SetAuthError(tt.authError)
 			}
 			if tt.prError != nil {
 				mock.SetPRError(tt.prError)
 			}
-			
+
 			prs, err := mock.ListPRs(tt.repo, tt.since)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("Expected error but got none")
@@ -308,7 +308,7 @@ func TestMockClient_ListPRs(t *testing.T) {
 
 func TestMockClient_CallLog(t *testing.T) {
 	mock := NewMockClient()
-	
+
 	// Setup mock data
 	mockRepos := []*github.Repository{
 		{Name: github.String("test-repo")},
@@ -316,28 +316,28 @@ func TestMockClient_CallLog(t *testing.T) {
 	mockPRs := []*model.PR{
 		{Title: "Test PR", MergedAt: &time.Time{}},
 	}
-	
+
 	mock.SetMockRepos(mockRepos)
 	mock.SetMockPRs(mockPRs)
-	
+
 	// Make some calls
 	scope := &config.Config{Org: "test-org"}
 	since := time.Now().AddDate(0, 0, -7)
-	
+
 	_, _ = mock.ListRepos(scope)
 	_, _ = mock.ListPRs("owner/repo", since)
-	
+
 	// Check call log
 	callLog := mock.GetCallLog()
 	if len(callLog) != 2 {
 		t.Errorf("Expected 2 calls in log, got %d", len(callLog))
 	}
-	
+
 	expectedCalls := []string{
 		"ListRepos",
 		"ListPRs",
 	}
-	
+
 	for i, expectedCall := range expectedCalls {
 		if i < len(callLog) {
 			if !containsString(callLog[i], expectedCall) {
@@ -345,7 +345,7 @@ func TestMockClient_CallLog(t *testing.T) {
 			}
 		}
 	}
-	
+
 	// Test clear log
 	mock.ClearCallLog()
 	if len(mock.GetCallLog()) != 0 {

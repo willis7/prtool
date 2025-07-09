@@ -216,17 +216,17 @@ func (c *RestClient) convertToModelPR(pr *github.PullRequest, repo string) *mode
 		Repository: repo,
 		State:      safeString(pr.State),
 	}
-	
+
 	// Extract labels
 	for _, label := range pr.Labels {
 		if label.Name != nil {
 			modelPR.Labels = append(modelPR.Labels, *label.Name)
 		}
 	}
-	
+
 	// Note: Getting file paths requires additional API calls which we'll implement later if needed
 	// For now, we'll leave this empty to keep the implementation simple
-	
+
 	return modelPR
 }
 

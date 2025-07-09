@@ -13,19 +13,19 @@ import (
 type MockClient struct {
 	// MockRepos can be set to control what ListRepos returns
 	MockRepos []*github.Repository
-	
+
 	// MockPRs can be set to control what ListPRs returns
 	MockPRs []*model.PR
-	
+
 	// AuthError can be set to simulate authentication failures
 	AuthError error
-	
+
 	// RepoError can be set to simulate repository listing failures
 	RepoError error
-	
+
 	// PRError can be set to simulate PR listing failures
 	PRError error
-	
+
 	// CallLog tracks method calls for verification in tests
 	CallLog []string
 }
@@ -40,19 +40,19 @@ func NewMockClient() *MockClient {
 // ListRepos implements GitHubClient.ListRepos for testing
 func (m *MockClient) ListRepos(scope *config.Config) ([]*github.Repository, error) {
 	m.CallLog = append(m.CallLog, fmt.Sprintf("ListRepos(%+v)", scope))
-	
+
 	if m.AuthError != nil {
 		return nil, m.AuthError
 	}
-	
+
 	if m.RepoError != nil {
 		return nil, m.RepoError
 	}
-	
+
 	if scope == nil {
 		return nil, fmt.Errorf("scope configuration is required")
 	}
-	
+
 	// Validate that exactly one scope is specified
 	scopeCount := 0
 	if scope.Org != "" {
@@ -67,34 +67,34 @@ func (m *MockClient) ListRepos(scope *config.Config) ([]*github.Repository, erro
 	if scope.Team != "" {
 		scopeCount++
 	}
-	
+
 	if scopeCount == 0 {
 		return nil, fmt.Errorf("no valid scope specified (org, user, repo, or team required)")
 	}
-	
+
 	if scopeCount > 1 {
 		return nil, fmt.Errorf("multiple scopes specified, only one allowed")
 	}
-	
+
 	return m.MockRepos, nil
 }
 
 // ListPRs implements GitHubClient.ListPRs for testing
 func (m *MockClient) ListPRs(repo string, since time.Time) ([]*model.PR, error) {
 	m.CallLog = append(m.CallLog, fmt.Sprintf("ListPRs(%s, %s)", repo, since.Format("2006-01-02")))
-	
+
 	if m.AuthError != nil {
 		return nil, m.AuthError
 	}
-	
+
 	if m.PRError != nil {
 		return nil, m.PRError
 	}
-	
+
 	if repo == "" {
 		return nil, fmt.Errorf("repository name is required")
 	}
-	
+
 	// Filter PRs by since date (only return PRs merged after since)
 	var filteredPRs []*model.PR
 	for _, pr := range m.MockPRs {
@@ -102,7 +102,7 @@ func (m *MockClient) ListPRs(repo string, since time.Time) ([]*model.PR, error) 
 			filteredPRs = append(filteredPRs, pr)
 		}
 	}
-	
+
 	return filteredPRs, nil
 }
 

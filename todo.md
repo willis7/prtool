@@ -41,9 +41,9 @@ Mark each task with `[x]` as you complete it.
 
 ## P5 — Scope Resolution
 
-- [ ] **S5.1** Functions to resolve repos for org, team, user, repo
-- [ ] **S5.2** Ensure mutual‑exclusion validation
-- [ ] **S5.3** Unit tests with `MockClient`
+- [x] **S5.1** Functions to resolve repos for org, team, user, repo
+- [x] **S5.2** Ensure mutual‑exclusion validation
+- [x] **S5.3** Unit tests with `MockClient`
 
 ## P6 — PR Retrieval
 
