@@ -61,9 +61,9 @@ Mark each task with `[x]` as you complete it.
 
 ## P8 — LLM Abstraction
 
-- [ ] **S8.1** Define `LLM` interface
-- [ ] **S8.2** Implement `StubLLM` returning canned summary
-- [ ] **S8.3** Unit tests for stub and error paths
+- [x] **S8.1** Define `LLM` interface
+- [x] **S8.2** Implement `StubLLM` returning canned summary
+- [x] **S8.3** Unit tests for stub and error paths
 
 ## P9 — LLM Integration
 

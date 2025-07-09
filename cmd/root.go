@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/willis7/prtool/internal/config"
 	"github.com/willis7/prtool/internal/gh"
+	"github.com/willis7/prtool/internal/llm"
 	"github.com/willis7/prtool/internal/model"
 	"github.com/willis7/prtool/internal/render"
 	"github.com/willis7/prtool/internal/scope"
@@ -132,6 +133,27 @@ func init() {
 
 		// Generate metadata
 		metadata := generateMetadata(cfg, prs)
+
+		// Generate LLM summary if not in dry-run mode
+		if !cfg.DryRun {
+			llmClient := createLLMClient(cfg)
+			if llmClient != nil {
+				if cfg.Verbose {
+					fmt.Fprintf(os.Stderr, "Generating AI summary...\n")
+				}
+
+				context := llm.BuildContext(prs)
+				summary, err := llmClient.Summarise(context)
+				if err != nil {
+					if cfg.Verbose {
+						fmt.Fprintf(os.Stderr, "Warning: Failed to generate AI summary: %v\n", err)
+					}
+					// Continue without summary rather than failing completely
+				} else {
+					metadata.Summary = summary
+				}
+			}
+		}
 
 		// Render markdown
 		markdownOutput := render.Render(metadata, prs)
@@ -268,4 +290,23 @@ func writeToFile(filename, content string) error {
 	}
 
 	return nil
+}
+
+// createLLMClient creates an LLM client based on configuration
+func createLLMClient(cfg *config.Config) llm.LLM {
+	// For now, we only have the stub implementation
+	// In the next iteration, we'll add OpenAI and Ollama implementations
+
+	if cfg.LLMProvider == "" {
+		// Default to stub for testing
+		return llm.NewStubLLM()
+	}
+
+	switch cfg.LLMProvider {
+	case "stub":
+		return llm.NewStubLLM()
+	default:
+		// Unsupported provider, return stub as fallback
+		return llm.NewStubLLM()
+	}
 }
