@@ -33,13 +33,13 @@ func TestRootCommand(t *testing.T) {
 				Use:   "prtool",
 				Short: "A CLI tool for summarizing GitHub pull requests",
 			}
-			
+
 			cmd.Flags().BoolP("version", "v", false, "Show version information")
-			
+
 			var output bytes.Buffer
 			cmd.SetOut(&output)
 			cmd.SetErr(&output)
-			
+
 			cmd.Run = func(cmd *cobra.Command, args []string) {
 				versionFlag, _ := cmd.Flags().GetBool("version")
 				if versionFlag {
@@ -48,17 +48,35 @@ func TestRootCommand(t *testing.T) {
 				}
 				cmd.Help()
 			}
-			
+
 			cmd.SetArgs(tt.args)
 			err := cmd.Execute()
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
-			
+
 			result := strings.TrimSpace(output.String())
 			if !strings.Contains(result, tt.expected) {
 				t.Errorf("Expected output to contain %q, got %q", tt.expected, result)
 			}
 		})
+	}
+}
+
+func TestGetConfig(t *testing.T) {
+	// Reset flags to known state
+	org = ""
+	user = ""
+	githubToken = ""
+	dryRun = false
+
+	// Test that GetConfig doesn't panic and returns a config
+	config, err := GetConfig()
+	if err != nil {
+		t.Fatalf("GetConfig() failed: %v", err)
+	}
+
+	if config == nil {
+		t.Error("GetConfig() returned nil config")
 	}
 }
