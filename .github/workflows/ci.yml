@@ -29,11 +29,14 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Run tests
-        run: make test
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-      - name: Run go vet
-        run: go vet ./...
+      - name: Run comprehensive checks
+        run: make check
+
+      - name: Build binary
+        run: make build
 
       - name: Check formatting
         run: |
@@ -42,3 +45,15 @@ jobs:
             gofmt -s -l .
             exit 1
           fi
+
+      - name: Test CLI functionality
+        run: |
+          # Test version command
+          ./bin/prtool --version
+
+          # Test help command
+          ./bin/prtool --help
+
+          # Test init command
+          ./bin/prtool init
+          ls -la .prtool.yaml

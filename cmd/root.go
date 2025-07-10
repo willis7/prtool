@@ -12,6 +12,7 @@ import (
 	"github.com/willis7/prtool/internal/config"
 	"github.com/willis7/prtool/internal/gh"
 	"github.com/willis7/prtool/internal/llm"
+	"github.com/willis7/prtool/internal/logger"
 	"github.com/willis7/prtool/internal/model"
 	"github.com/willis7/prtool/internal/render"
 	"github.com/willis7/prtool/internal/scope"
@@ -117,30 +118,46 @@ func init() {
 		// Validate configuration
 		if err := validateConfig(cfg); err != nil {
 			fmt.Fprintf(os.Stderr, "Configuration error: %v\n", err)
+			if cfg.CI {
+				os.Exit(1)
+			}
+			os.Exit(1)
+		}
+
+		// Create logger
+		log, err := logger.New(cfg.Verbose, cfg.CI, cfg.LogFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
 			os.Exit(1)
 		}
 
 		// Create GitHub client
+		log.Progress("Connecting to GitHub...")
 		ghClient, err := gh.NewRestClient(cfg.GitHubToken)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create GitHub client: %v\n", err)
+			log.Error("Failed to create GitHub client: %v", err)
+			if cfg.CI {
+				os.Exit(1)
+			}
 			os.Exit(1)
 		}
 
 		// Fetch PRs
+		log.Progress("Fetching pull requests...")
 		prs, err := service.Fetch(cfg, ghClient)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to fetch PRs: %v\n", err)
+			log.Error("Failed to fetch PRs: %v", err)
+			if cfg.CI {
+				os.Exit(1)
+			}
 			os.Exit(1)
 		}
 
-		if cfg.Verbose {
-			fmt.Fprintf(os.Stderr, "Fetched %d pull requests\n", len(prs))
-		}
+		log.Info("Fetched %d pull requests", len(prs))
 
 		// Handle dry-run mode
 		if cfg.DryRun {
-			fmt.Print(render.RenderTable(prs))
+			log.Output(render.RenderTable(prs))
 			return
 		}
 
@@ -151,37 +168,41 @@ func init() {
 		if !cfg.DryRun {
 			llmClient := createLLMClient(cfg)
 			if llmClient != nil {
-				if cfg.Verbose {
-					fmt.Fprintf(os.Stderr, "Generating AI summary...\n")
-				}
+				log.Progress("Generating AI summary...")
 
 				context := llm.BuildContext(prs)
 				summary, err := llmClient.Summarise(context)
 				if err != nil {
-					if cfg.Verbose {
-						fmt.Fprintf(os.Stderr, "Warning: Failed to generate AI summary: %v\n", err)
-					}
+					log.Info("Warning: Failed to generate AI summary: %v", err)
 					// Continue without summary rather than failing completely
 				} else {
 					metadata.Summary = summary
+					log.Info("AI summary generated successfully")
 				}
 			}
 		}
 
 		// Render markdown
+		log.Progress("Rendering markdown...")
 		markdownOutput := render.Render(metadata, prs)
 
 		// Output to file or stdout
 		if cfg.Output != "" {
 			if err := writeToFile(cfg.Output, markdownOutput); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to write output file: %v\n", err)
+				log.Error("Failed to write output file: %v", err)
+				if cfg.CI {
+					os.Exit(1)
+				}
 				os.Exit(1)
 			}
-			if cfg.Verbose {
-				fmt.Fprintf(os.Stderr, "Output written to: %s\n", cfg.Output)
-			}
+			log.Info("Output written to: %s", cfg.Output)
 		} else {
-			fmt.Print(markdownOutput)
+			log.Output(markdownOutput)
+		}
+
+		if cfg.CI {
+			// In CI mode, exit with 0 for success
+			os.Exit(0)
 		}
 	}
 }

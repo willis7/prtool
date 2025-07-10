@@ -14,6 +14,7 @@ import (
 	"github.com/willis7/prtool/internal/config"
 	"github.com/willis7/prtool/internal/gh"
 	"github.com/willis7/prtool/internal/llm"
+	"github.com/willis7/prtool/internal/logger"
 	"github.com/willis7/prtool/internal/model"
 	"github.com/willis7/prtool/internal/render"
 	"github.com/willis7/prtool/internal/service"
@@ -867,5 +868,132 @@ func TestRealVersionChecker(t *testing.T) {
 	// but it tests the method signature and basic functionality
 	if err != nil {
 		t.Logf("GitHub API call failed (this may be expected): %v", err)
+	}
+}
+
+func TestCIMode(t *testing.T) {
+	// Save original version checker
+	originalChecker := versionChecker
+	defer func() { versionChecker = originalChecker }()
+
+	// Set up mock
+	versionChecker = &MockVersionChecker{
+		release: &GitHubRelease{
+			TagName: "v1.0.0",
+			Name:    "Version 1.0.0",
+			HTMLURL: "https://github.com/willis7/prtool/releases/tag/v1.0.0",
+		},
+	}
+
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "version with CI flag",
+			args: []string{"--ci", "--version"},
+		},
+		{
+			name: "version-check with CI flag",
+			args: []string{"--ci", "--version-check"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := rootCmd
+			cmd.SetArgs(tt.args)
+
+			// Capture output
+			oldStdout := os.Stdout
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+			os.Stderr = w
+
+			// Execute command
+			err := cmd.Execute()
+
+			// Restore streams
+			w.Close()
+			os.Stdout = oldStdout
+			os.Stderr = oldStderr
+
+			// Read output
+			buf := make([]byte, 1024)
+			n, _ := r.Read(buf)
+			output := string(buf[:n])
+
+			// CI mode should not fail for these commands
+			if err != nil {
+				t.Errorf("CI mode command failed: %v", err)
+			}
+
+			// Output should be produced
+			if output == "" {
+				t.Error("Expected output in CI mode")
+			}
+
+			t.Logf("CI mode output: %s", output)
+		})
+	}
+}
+
+func TestLoggerIntegration(t *testing.T) {
+	tests := []struct {
+		name         string
+		verbose      bool
+		ci           bool
+		logFile      string
+		expectOutput bool
+	}{
+		{
+			name:         "verbose mode",
+			verbose:      true,
+			ci:           false,
+			expectOutput: true,
+		},
+		{
+			name:         "ci mode",
+			verbose:      false,
+			ci:           true,
+			expectOutput: false, // Progress should be suppressed
+		},
+		{
+			name:         "normal mode",
+			verbose:      false,
+			ci:           false,
+			expectOutput: true, // Progress should be shown
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log, err := logger.New(tt.verbose, tt.ci, tt.logFile)
+			if err != nil {
+				t.Fatalf("Failed to create logger: %v", err)
+			}
+
+			// Capture stderr for progress messages
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+
+			log.Progress("Test progress message")
+
+			// Restore stderr
+			w.Close()
+			os.Stderr = oldStderr
+
+			// Read captured output
+			buf := make([]byte, 1024)
+			n, _ := r.Read(buf)
+			output := string(buf[:n])
+
+			hasOutput := len(output) > 0
+			if hasOutput != tt.expectOutput {
+				t.Errorf("Expected output=%v, got output=%v (output: %q)", tt.expectOutput, hasOutput, output)
+			}
+		})
 	}
 }

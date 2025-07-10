@@ -89,10 +89,10 @@ Mark each task with `[x]` as you complete it.
 
 ### Continuous Integration / Quality Gates
 
-- [ ] Run `go test ./...` — all green
-- [ ] Run `go vet ./...`
-- [ ] Run `golangci-lint run`
-- [ ] Ensure `go mod tidy` produces no diff
+- [x] Run `go test ./...` — all green
+- [x] Run `go vet ./...`
+- [x] Run `golangci-lint run`
+- [x] Ensure `go mod tidy` produces no diff
 
 ### Manual Smoke Tests
 

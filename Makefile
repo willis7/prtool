@@ -1,7 +1,7 @@
-.PHONY: test build clean vet lint
+.PHONY: test build clean vet lint check ci
 
 # Default target
-all: test
+all: check
 
 # Run tests
 test:
@@ -21,7 +21,11 @@ vet:
 
 # Run golangci-lint (if installed)
 lint:
-	golangci-lint run
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run; \
+	else \
+		echo "golangci-lint not installed, skipping"; \
+	fi
 
 # Run tests with coverage
 test-coverage:
@@ -30,3 +34,13 @@ test-coverage:
 # Tidy dependencies
 tidy:
 	go mod tidy
+
+# Run comprehensive checks (for CI)
+check: tidy vet test lint
+
+# CI target - runs all checks and builds
+ci: check build
+
+# Install golangci-lint (for development)
+install-lint:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
