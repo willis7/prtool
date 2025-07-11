@@ -11,12 +11,24 @@ all: test build
 # Build the binary
 .PHONY: build
 build:
-	go build -o $(BINARY_NAME) .
+	go build -ldflags "-X github.com/yourorg/prtool/cmd.appVersion=$(VERSION)" -o $(BINARY_NAME) .
 
 # Run tests
 .PHONY: test
 test:
 	go test ./...
+
+# Test version injection
+.PHONY: test-version
+test-version: build
+	@echo "Testing version injection..."
+	@OUTPUT=$$(./$(BINARY_NAME) --version 2>&1); \
+	if echo "$$OUTPUT" | grep -q "$(VERSION)"; then \
+		echo "✓ Version $(VERSION) correctly injected"; \
+	else \
+		echo "✗ Version injection failed. Output: $$OUTPUT"; \
+		exit 1; \
+	fi
 
 # Run tests with coverage
 .PHONY: test-coverage
@@ -68,11 +80,11 @@ tag:
 .PHONY: build-all
 build-all:
 	mkdir -p $(BUILD_DIR)
-	GOOS=darwin GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
-	GOOS=darwin GOARCH=arm64 go build -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 .
-	GOOS=linux GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 .
-	GOOS=linux GOARCH=arm64 go build -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 .
-	GOOS=windows GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .
+	GOOS=darwin GOARCH=amd64 go build -ldflags "-X github.com/yourorg/prtool/cmd.appVersion=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
+	GOOS=darwin GOARCH=arm64 go build -ldflags "-X github.com/yourorg/prtool/cmd.appVersion=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 .
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/yourorg/prtool/cmd.appVersion=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 .
+	GOOS=linux GOARCH=arm64 go build -ldflags "-X github.com/yourorg/prtool/cmd.appVersion=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 .
+	GOOS=windows GOARCH=amd64 go build -ldflags "-X github.com/yourorg/prtool/cmd.appVersion=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .
 
 # Run the binary
 .PHONY: run
@@ -86,6 +98,7 @@ help:
 	@echo "  all          - Run tests and build the binary (default)"
 	@echo "  build        - Build the binary"
 	@echo "  test         - Run all tests"
+	@echo "  test-version - Test version injection"
 	@echo "  test-coverage- Run tests with coverage report"
 	@echo "  test-e2e     - Run end-to-end tests"
 	@echo "  lint         - Run linters"
