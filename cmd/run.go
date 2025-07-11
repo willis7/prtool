@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -58,6 +59,18 @@ func runExecute(cmd *cobra.Command, args []string) error {
 		output := render.RenderDryRun(prs)
 		fmt.Print(output)
 		return nil
+	}
+
+	// Generate summaries using LLM
+	summarizer, err := service.NewSummarizer(config)
+	if err != nil {
+		return fmt.Errorf("failed to create summarizer: %w", err)
+	}
+
+	ctx := context.Background()
+	prs, err = summarizer.SummarizePRs(ctx, prs, config.Verbose)
+	if err != nil {
+		return fmt.Errorf("failed to generate summaries: %w", err)
 	}
 
 	// Prepare metadata

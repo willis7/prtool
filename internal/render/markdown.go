@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -57,8 +58,16 @@ func Render(meta Metadata, prs []model.PR) string {
 	// Group PRs by repository
 	prsByRepo := groupPRsByRepository(prs)
 
+	// Sort repositories for consistent output
+	var repos []string
+	for repo := range prsByRepo {
+		repos = append(repos, repo)
+	}
+	sort.Strings(repos)
+
 	// Render PRs for each repository
-	for repo, repoPRs := range prsByRepo {
+	for _, repo := range repos {
+		repoPRs := prsByRepo[repo]
 		sb.WriteString(fmt.Sprintf("### %s\n\n", repo))
 
 		for _, pr := range repoPRs {
