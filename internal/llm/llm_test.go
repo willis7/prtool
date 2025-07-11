@@ -30,20 +30,19 @@ func TestNewLLM(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "openai not yet implemented",
+			name: "openai without API key",
 			config: Config{
 				Provider: "openai",
 			},
 			wantErr: true,
-			errMsg:  "OpenAI provider not yet implemented",
+			errMsg:  "OpenAI API key is required",
 		},
 		{
-			name: "ollama not yet implemented",
+			name: "ollama provider",
 			config: Config{
 				Provider: "ollama",
 			},
-			wantErr: true,
-			errMsg:  "Ollama provider not yet implemented",
+			wantErr: false,
 		},
 		{
 			name: "unknown provider",

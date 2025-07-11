@@ -36,9 +36,9 @@ func NewLLM(config Config) (LLM, error) {
 	case "stub", "":
 		return NewStubLLM(), nil
 	case "openai":
-		return nil, fmt.Errorf("OpenAI provider not yet implemented")
+		return NewOpenAILLM(config)
 	case "ollama":
-		return nil, fmt.Errorf("Ollama provider not yet implemented")
+		return NewOllamaLLM(config)
 	default:
 		return nil, fmt.Errorf("unknown LLM provider: %s", config.Provider)
 	}
