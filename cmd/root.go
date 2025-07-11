@@ -1,23 +1,41 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/yourorg/prtool/internal/config"
+	"github.com/yourorg/prtool/internal/version"
 )
 
 var (
-	version    = "dev"
-	cfgFile    string
-	cfg        = config.New()
+	appVersion   = "dev"
+	cfgFile      string
+	cfg          = config.New()
+	versionCheck bool
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "prtool",
 	Short: "A tool for fetching and summarizing GitHub pull requests",
 	Long:  `prtool fetches merged GitHub pull requests and generates AI-powered summaries.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// If --version-check is specified, it's handled in PersistentPreRunE
+		// Otherwise, show help
+		if !versionCheck {
+			cmd.Help()
+		}
+	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// Handle version check if requested
+		if versionCheck {
+			return runVersionCheck()
+		}
+		return nil
+	},
 }
 
 func Execute() {
@@ -57,7 +75,10 @@ func init() {
 
 	// Version flag
 	rootCmd.Flags().BoolP("version", "v", false, "version for prtool")
-	rootCmd.Version = version
+	rootCmd.Version = appVersion
+	
+	// Version check flag
+	rootCmd.PersistentFlags().BoolVar(&versionCheck, "version-check", false, "check for latest version")
 }
 
 func initConfig() {
@@ -99,4 +120,31 @@ func initConfig() {
 
 func GetConfig() *config.Config {
 	return cfg
+}
+
+func runVersionCheck() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	fmt.Printf("Current version: %s\n", appVersion)
+	fmt.Println("Checking for updates...")
+
+	checker := version.NewGitHubChecker()
+	hasUpdate, latest, err := version.CheckForUpdate(ctx, checker, appVersion, "yourorg", "prtool")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to check for updates: %v\n", err)
+		os.Exit(0) // Exit cleanly after showing error
+	}
+
+	if hasUpdate {
+		fmt.Printf("\nA new version is available: %s (published %s)\n", latest.TagName, latest.PublishedAt.Format("2006-01-02"))
+		fmt.Printf("Release: %s\n", latest.HTMLURL)
+		fmt.Println("\nTo update, run:")
+		fmt.Println("  go install github.com/yourorg/prtool@latest")
+	} else {
+		fmt.Println("You are running the latest version!")
+	}
+
+	os.Exit(0) // Exit after version check
+	return nil // This won't be reached but satisfies the compiler
 }
