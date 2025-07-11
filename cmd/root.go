@@ -52,6 +52,9 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfg.Output.Format, "output-format", "markdown", "output format")
 	rootCmd.PersistentFlags().StringVar(&cfg.Output.File, "output-file", "", "output file")
 
+	// Time range flag
+	rootCmd.PersistentFlags().StringVar(&cfg.TimeRange, "since", "-7d", "time range for PRs (e.g., -7d, -1m, -1yr)")
+
 	// Version flag
 	rootCmd.Flags().BoolP("version", "v", false, "version for prtool")
 	rootCmd.Version = version

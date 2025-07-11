@@ -10,11 +10,12 @@ import (
 )
 
 type Config struct {
-	GitHub  GitHubConfig  `yaml:"github"`
-	LLM     LLMConfig     `yaml:"llm"`
-	Output  OutputConfig  `yaml:"output"`
-	Verbose bool          `yaml:"verbose"`
-	DryRun  bool          `yaml:"dry_run"`
+	GitHub    GitHubConfig  `yaml:"github"`
+	LLM       LLMConfig     `yaml:"llm"`
+	Output    OutputConfig  `yaml:"output"`
+	Verbose   bool          `yaml:"verbose"`
+	DryRun    bool          `yaml:"dry_run"`
+	TimeRange string        `yaml:"time_range"`
 }
 
 type GitHubConfig struct {

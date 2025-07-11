@@ -95,12 +95,12 @@ func (f *Fetcher) Fetch(cfg *config.Config) ([]model.PR, error) {
 
 // parseTimeRange determines the since time based on configuration
 func parseTimeRange(cfg *config.Config) (time.Time, error) {
-	// Check if a relative time range is specified via CLI flag
-	// For now, we'll default to 7 days ago if not specified
-	// This will be enhanced when we add the time range flag
-	defaultRange := "-7d"
+	timeRange := cfg.TimeRange
+	if timeRange == "" {
+		timeRange = "-7d"
+	}
 	
-	return timeutil.ParseRelativeDuration(defaultRange)
+	return timeutil.ParseRelativeDuration(timeRange)
 }
 
 // Fetch is a convenience function that creates a fetcher and fetches PRs
