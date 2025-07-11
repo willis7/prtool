@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/yourorg/prtool/internal/config"
+	"github.com/yourorg/prtool/internal/logger"
 	"github.com/yourorg/prtool/internal/version"
 )
 
@@ -30,6 +32,11 @@ var rootCmd = &cobra.Command{
 		}
 	},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// Initialize logger
+		if err := logger.Init(cfg.Verbose, cfg.CI, cfg.LogFile); err != nil {
+			return fmt.Errorf("failed to initialize logger: %w", err)
+		}
+		
 		// Handle version check if requested
 		if versionCheck {
 			return runVersionCheck()
@@ -40,7 +47,21 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logger.Error("%v", err)
+		if cfg.CI {
+			// In CI mode, exit with specific codes
+			switch err.Error() {
+			case "GitHub token is required. Set via --github-token, PRTOOL_GITHUB_TOKEN, or config file":
+				os.Exit(2) // Configuration error
+			default:
+				if strings.Contains(err.Error(), "failed to fetch pull requests") {
+					os.Exit(3) // API error
+				} else if strings.Contains(err.Error(), "failed to generate summaries") {
+					os.Exit(4) // LLM error
+				}
+				os.Exit(1) // General error
+			}
+		}
 		os.Exit(1)
 	}
 }
@@ -79,6 +100,10 @@ func init() {
 	
 	// Version check flag
 	rootCmd.PersistentFlags().BoolVar(&versionCheck, "version-check", false, "check for latest version")
+	
+	// CI and logging flags
+	rootCmd.PersistentFlags().BoolVar(&cfg.CI, "ci", false, "CI mode (non-interactive output, sets exit codes)")
+	rootCmd.PersistentFlags().StringVar(&cfg.LogFile, "log-file", "", "log file path")
 }
 
 func initConfig() {

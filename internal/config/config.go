@@ -16,6 +16,8 @@ type Config struct {
 	Verbose   bool          `yaml:"verbose"`
 	DryRun    bool          `yaml:"dry_run"`
 	TimeRange string        `yaml:"time_range"`
+	CI        bool          `yaml:"ci"`
+	LogFile   string        `yaml:"log_file"`
 }
 
 type GitHubConfig struct {
@@ -125,6 +127,12 @@ func LoadFromEnv() *Config {
 	if dryRun := os.Getenv("PRTOOL_DRY_RUN"); dryRun != "" {
 		config.DryRun = dryRun == "true" || dryRun == "1"
 	}
+	if ci := os.Getenv("PRTOOL_CI"); ci != "" {
+		config.CI = ci == "true" || ci == "1"
+	}
+	if logFile := os.Getenv("PRTOOL_LOG_FILE"); logFile != "" {
+		config.LogFile = logFile
+	}
 
 	return config
 }
@@ -190,6 +198,15 @@ func MergeConfig(base, overlay *Config) *Config {
 	}
 	if overlay.DryRun {
 		merged.DryRun = overlay.DryRun
+	}
+	if overlay.TimeRange != "" {
+		merged.TimeRange = overlay.TimeRange
+	}
+	if overlay.CI {
+		merged.CI = overlay.CI
+	}
+	if overlay.LogFile != "" {
+		merged.LogFile = overlay.LogFile
 	}
 
 	return &merged
