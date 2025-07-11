@@ -3,6 +3,8 @@ package gh
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -41,6 +43,15 @@ func NewRestClient(token string) (*RestClient, error) {
 
 	ctx := context.Background()
 	client := github.NewTokenClient(ctx, token)
+
+	// Check for custom API URL (for testing)
+	if apiURL := os.Getenv("GITHUB_API_URL"); apiURL != "" {
+		parsedURL, err := url.Parse(apiURL + "/")
+		if err != nil {
+			return nil, fmt.Errorf("invalid GITHUB_API_URL: %w", err)
+		}
+		client.BaseURL = parsedURL
+	}
 
 	return &RestClient{
 		client: client,
