@@ -28,6 +28,10 @@ func Execute() {
 func init() {
 	rootCmd.Flags().BoolP("version", "v", false, "Print version")
 	rootCmd.Flags().Bool("version-check", false, "Check for latest release on GitHub")
+	rootCmd.Flags().Bool("ci", false, "CI mode: disables interactive output/spinners, sets exit codes")
+	rootCmd.Flags().Bool("verbose", false, "Enable verbose logging")
+	rootCmd.Flags().String("log-file", "", "Path to log file")
+
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		if v, _ := cmd.Flags().GetBool("version"); v {
 			fmt.Println(version)
@@ -37,6 +41,16 @@ func init() {
 			latest := getLatestRelease()
 			fmt.Printf("Latest release: %s\n", latest)
 			os.Exit(0)
+		}
+		if ci, _ := cmd.Flags().GetBool("ci"); ci {
+			// In CI mode, disable interactive output/spinners
+			os.Setenv("PRTOOL_CI", "1")
+		}
+		if verbose, _ := cmd.Flags().GetBool("verbose"); verbose {
+			os.Setenv("PRTOOL_VERBOSE", "1")
+		}
+		if logFile, _ := cmd.Flags().GetString("log-file"); logFile != "" {
+			os.Setenv("PRTOOL_LOG_FILE", logFile)
 		}
 	}
 }
