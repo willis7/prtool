@@ -39,3 +39,4 @@ build/
 bin/
 
 prtool
+.prtool.yaml
