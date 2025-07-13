@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/sashabaranov/go-openai"
@@ -204,7 +205,12 @@ Please provide a summary in 2-3 paragraphs that would be useful for a developmen
 	if err != nil {
 		return "", fmt.Errorf("ollama API error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			// Log the error but don't fail the function
+			fmt.Fprintf(os.Stderr, "Warning: failed to close response body: %v\n", closeErr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("ollama API returned status %d", resp.StatusCode)

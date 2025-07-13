@@ -145,23 +145,23 @@ func TestLoadFromEnv(t *testing.T) {
 			originalValues := make(map[string]string)
 			for _, name := range envVarNames {
 				originalValues[name] = os.Getenv(name)
-				os.Unsetenv(name)
+				_ = os.Unsetenv(name) // Ignore error in test cleanup
 			}
 
 			// Restore original values after test
 			defer func() {
 				for name, value := range originalValues {
 					if value != "" {
-						os.Setenv(name, value)
+						_ = os.Setenv(name, value) // Ignore error in test cleanup
 					} else {
-						os.Unsetenv(name)
+						_ = os.Unsetenv(name) // Ignore error in test cleanup
 					}
 				}
 			}()
 
 			// Set test env vars
 			for name, value := range tt.envVars {
-				os.Setenv(name, value)
+				_ = os.Setenv(name, value) // Ignore error in test setup
 			}
 
 			config := LoadFromEnv()

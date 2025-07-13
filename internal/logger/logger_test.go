@@ -49,7 +49,7 @@ func TestLogger_New(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Clean up log file if it exists
 			if tt.logFile != "" && strings.HasPrefix(tt.logFile, "/tmp/") {
-				defer os.Remove(tt.logFile)
+				defer func() { _ = os.Remove(tt.logFile) }() // Ignore error in test cleanup
 			}
 
 			logger, err := New(tt.verbose, tt.ci, tt.logFile)
@@ -199,7 +199,7 @@ func TestLogger_Output(t *testing.T) {
 
 	// Read captured output
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r) // Ignore error in test
 	output := buf.String()
 
 	expected := "Test output message"

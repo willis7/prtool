@@ -58,7 +58,7 @@ func TestRootCommand(t *testing.T) {
 					cmd.Print("dev")
 					return
 				}
-				cmd.Help()
+				_ = cmd.Help() // Ignore error in test
 			}
 
 			cmd.SetArgs(tt.args)
@@ -419,7 +419,7 @@ func TestCreateLLMClient(t *testing.T) {
 			client := createLLMClient(tt.cfg)
 
 			// Restore stderr
-			w.Close()
+			_ = w.Close() // Ignore error in test cleanup
 			os.Stderr = oldStderr
 
 			// Read captured output
@@ -774,7 +774,7 @@ func TestVersionCheck(t *testing.T) {
 			err := checkLatestVersion()
 
 			// Restore stdout
-			w.Close()
+			_ = w.Close() // Ignore error in test cleanup
 			os.Stdout = oldStdout
 
 			// Read captured output
@@ -829,7 +829,7 @@ func TestVersionCheckCommand(t *testing.T) {
 	err := cmd.Execute()
 
 	// Restore stdout
-	w.Close()
+	_ = w.Close() // Ignore error in test cleanup
 	os.Stdout = oldStdout
 
 	// Check that it executed without error
