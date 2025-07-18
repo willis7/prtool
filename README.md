@@ -271,6 +271,43 @@ Set the token via:
 2. Configuration file: `github_token: "ghp_xxx"`
 3. Command line: `--github-token=ghp_xxx`
 
+## Shell Completion
+
+prtool supports shell completion for bash, zsh, fish, and PowerShell.
+
+### Bash
+
+```bash
+# Add to ~/.bashrc or ~/.bash_profile
+source <(prtool completion bash)
+
+# Or install globally
+prtool completion bash > /etc/bash_completion.d/prtool
+```
+
+### Zsh
+
+```bash
+# Add to ~/.zshrc
+source <(prtool completion zsh)
+
+# Or for oh-my-zsh users
+prtool completion zsh > "${fpath[1]}/_prtool"
+```
+
+### Fish
+
+```bash
+prtool completion fish > ~/.config/fish/completions/prtool.fish
+```
+
+### PowerShell
+
+```powershell
+# Add to PowerShell profile
+prtool completion powershell >> $PROFILE
+```
+
 ## Examples
 
 ### Weekly Team Report

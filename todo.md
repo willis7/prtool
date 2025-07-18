@@ -80,25 +80,27 @@ Mark each task with `[x]` as you complete it.
 
 ## P11 — Polish & CI Enhancements
 
-- [ ] **S11.1** Add `--ci` flag (non‑interactive mode)
-- [ ] **S11.2** Implement logging to file when configured; honor `--verbose`
-- [ ] **S11.3** Update `README.md` with examples and autocompletion steps
-- [ ] **S11.4** Tag `v0.1.0` release and configure release workflow
+## P11 — Polish & CI Enhancements
+
+- [x] **S11.1** Add `--ci` flag (non‑interactive mode)
+- [x] **S11.2** Implement logging to file when configured; honor `--verbose`
+- [x] **S11.3** Update `README.md` with examples and autocompletion steps
+- [x] **S11.4** Tag `v0.1.0` release and configure release workflow
 
 ---
 
 ### Continuous Integration / Quality Gates
 
-- [x] Run `go test ./...` — all green
-- [x] Run `go vet ./...`
-- [x] Run `golangci-lint run`
-- [x] Ensure `go mod tidy` produces no diff
+- Run `go test ./...` — all green
+- Run `go vet ./...`
+- Run `golangci-lint run`
+- Ensure `go mod tidy` produces no diff
 
 ### Manual Smoke Tests
 
-- [ ] Build binary (`go build ./cmd/prtool`)
-- [ ] Execute `prtool run --dry-run --org <org> --since "-7d"` with a valid PAT
-- [ ] Execute full run with OpenAI creds and confirm Markdown output
+- Build binary (`go build ./cmd/prtool`)
+- Execute `prtool run --dry-run --org <org> --since "-7d"` with a valid PAT
+- Execute full run with OpenAI creds and confirm Markdown output
 
 ---
 

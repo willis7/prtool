@@ -997,3 +997,93 @@ func TestLoggerIntegration(t *testing.T) {
 		})
 	}
 }
+
+func TestCompletionCommand(t *testing.T) {
+	tests := []struct {
+		name        string
+		args        []string
+		expectError bool
+		expectStart string
+	}{
+		{
+			name:        "bash completion",
+			args:        []string{"completion", "bash"},
+			expectError: false,
+			expectStart: "# bash completion for prtool",
+		},
+		{
+			name:        "zsh completion",
+			args:        []string{"completion", "zsh"},
+			expectError: false,
+			expectStart: "#compdef prtool",
+		},
+		{
+			name:        "fish completion",
+			args:        []string{"completion", "fish"},
+			expectError: false,
+			expectStart: "# fish completion for prtool",
+		},
+		{
+			name:        "powershell completion",
+			args:        []string{"completion", "powershell"},
+			expectError: false,
+			expectStart: "# powershell completion for prtool",
+		},
+		{
+			name:        "invalid shell",
+			args:        []string{"completion", "invalid"},
+			expectError: true,
+			expectStart: "",
+		},
+		{
+			name:        "no shell specified",
+			args:        []string{"completion"},
+			expectError: true,
+			expectStart: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Capture stdout
+			var stdout bytes.Buffer
+
+			// Create a new root command for each test to avoid state pollution
+			cmd := &cobra.Command{
+				Use:   "prtool",
+				Short: "A CLI tool for summarizing GitHub pull requests",
+			}
+			cmd.AddCommand(completionCmd)
+			cmd.SetOut(&stdout)
+			cmd.SetErr(&stdout)
+			cmd.SetArgs(tt.args)
+
+			// Execute
+			err := cmd.Execute()
+
+			// Check error expectation
+			if tt.expectError && err == nil {
+				t.Error("Expected error but got none")
+			} else if !tt.expectError && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+
+			// Check output if no error expected
+			if !tt.expectError && tt.expectStart != "" {
+				output := stdout.String()
+				if output == "" {
+					t.Errorf("Expected output but got empty string")
+				} else if !strings.HasPrefix(output, tt.expectStart) {
+					t.Errorf("Expected output to start with %q, got first 100 chars: %q", tt.expectStart, output[:min(len(output), 100)])
+				}
+			}
+		})
+	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}

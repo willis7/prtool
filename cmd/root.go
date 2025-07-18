@@ -61,6 +61,9 @@ func Execute() {
 }
 
 func init() {
+	// Add completion command
+	rootCmd.AddCommand(completionCmd)
+
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ~/.prtool.yaml)")
 	rootCmd.Flags().BoolP("version", "v", false, "Show version information")
@@ -426,4 +429,44 @@ func checkLatestVersion() error {
 	}
 
 	return nil
+}
+
+// completionCmd represents the completion command
+var completionCmd = &cobra.Command{
+	Use:   "completion [bash|zsh|fish|powershell]",
+	Short: "Generate shell completion script",
+	Long: `Generate shell completion script for prtool.
+
+The completion script is output to stdout and can be sourced to provide
+tab completion for prtool commands and flags.
+
+Examples:
+  # Bash completion
+  source <(prtool completion bash)
+
+  # Zsh completion
+  source <(prtool completion zsh)
+
+  # Fish completion
+  prtool completion fish > ~/.config/fish/completions/prtool.fish
+
+  # PowerShell completion
+  prtool completion powershell >> $PROFILE
+`,
+	DisableFlagsInUseLine: true,
+	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
+	Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		switch args[0] {
+		case "bash":
+			return cmd.Root().GenBashCompletion(os.Stdout)
+		case "zsh":
+			return cmd.Root().GenZshCompletion(os.Stdout)
+		case "fish":
+			return cmd.Root().GenFishCompletion(os.Stdout, true)
+		case "powershell":
+			return cmd.Root().GenPowerShellCompletion(os.Stdout)
+		}
+		return nil
+	},
 }
