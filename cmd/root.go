@@ -160,7 +160,7 @@ func init() {
 
 		// Handle dry-run mode
 		if cfg.DryRun {
-			log.Output(render.RenderTable(prs))
+			log.Output("%s", render.RenderTable(prs))
 			return
 		}
 
@@ -200,7 +200,7 @@ func init() {
 			}
 			log.Info("Output written to: %s", cfg.Output)
 		} else {
-			log.Output(markdownOutput)
+			log.Output("%s", markdownOutput)
 		}
 
 		if cfg.CI {

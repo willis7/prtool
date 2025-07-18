@@ -32,7 +32,7 @@ Phases P0‑P11 map 1‑to‑1 onto the iterative chunks below.
 Each **chunk** delivers one phase. Each chunk is decomposed into **atomic steps** that can be completed in <30 min and include tests.
 
 > **Notation**\
-> `Sx.y` = Step *y* inside Chunk *x*.
+> `Sx.y` = Step _y_ inside Chunk _x_.
 
 ### Chunk 0 (P0) – Repo & Tooling
 
@@ -310,4 +310,3 @@ Tasks:
 ---
 
 > **Implementation protocol:** After each prompt, run tests locally (or via CI). Only proceed when green. If a step grows too large, split it and iterate.
-
