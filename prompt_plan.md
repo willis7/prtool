@@ -147,7 +147,7 @@ Tasks:
 4. Add a basic `Makefile` with `test` target.
 5. Add GitHub Actions workflow `.github/workflows/ci.yml` that runs `make test`.
 6. Add one placeholder test (`internal/placeholder/placeholder_test.go`) that asserts `true`.
-All code must compile with `go 1.22`. Run `go test ./...` to ensure green tests.
+All code must compile with `go 1.24`. Run `go test ./...` to ensure green tests.
 Output the full file list plus contents.
 ```
 
