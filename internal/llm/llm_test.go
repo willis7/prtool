@@ -75,7 +75,7 @@ func TestNewStubLLM_Constructors(t *testing.T) {
 	t.Run("NewStubLLM creates with default summary", func(t *testing.T) {
 		stub := NewStubLLM()
 		if stub == nil {
-			t.Error("Expected non-nil stub")
+			t.Fatal("Expected non-nil stub")
 		}
 		if stub.summary == "" {
 			t.Error("Expected default summary to be set")

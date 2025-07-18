@@ -67,7 +67,7 @@ func TestLogger_New(t *testing.T) {
 			}
 
 			if logger == nil {
-				t.Error("Expected logger but got nil")
+				t.Fatal("Expected logger but got nil")
 			}
 
 			if logger.verbose != tt.verbose {
@@ -116,7 +116,7 @@ func TestLogger_Info(t *testing.T) {
 			logger.Info(tt.message, tt.args...)
 
 			// Restore stderr
-			w.Close()
+			_ = w.Close()
 			os.Stderr = oldStderr
 
 			// Read captured output
@@ -166,7 +166,7 @@ func TestLogger_Progress(t *testing.T) {
 			logger.Progress(tt.message)
 
 			// Restore stderr
-			w.Close()
+			_ = w.Close()
 			os.Stderr = oldStderr
 
 			// Read captured output
@@ -194,7 +194,7 @@ func TestLogger_Output(t *testing.T) {
 	logger.Output("Test output %s", "message")
 
 	// Restore stdout
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
 
 	// Read captured output

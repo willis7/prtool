@@ -915,7 +915,7 @@ func TestCIMode(t *testing.T) {
 			err := cmd.Execute()
 
 			// Restore streams
-			w.Close()
+			_ = w.Close()
 			os.Stdout = oldStdout
 			os.Stderr = oldStderr
 
@@ -982,7 +982,7 @@ func TestLoggerIntegration(t *testing.T) {
 			log.Progress("Test progress message")
 
 			// Restore stderr
-			w.Close()
+			_ = w.Close()
 			os.Stderr = oldStderr
 
 			// Read captured output

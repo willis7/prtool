@@ -16,7 +16,7 @@ func TestNewFetcher(t *testing.T) {
 	fetcher := NewFetcher(mockClient)
 
 	if fetcher == nil {
-		t.Error("Expected non-nil fetcher")
+		t.Fatal("Expected non-nil fetcher")
 	}
 
 	if fetcher.ghClient != mockClient {
