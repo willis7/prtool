@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/willis7/prtool/internal/build"
 	"github.com/willis7/prtool/internal/config"
 	"github.com/willis7/prtool/internal/gh"
 	"github.com/willis7/prtool/internal/llm"
@@ -98,7 +99,15 @@ func init() {
 	rootCmd.Run = func(cmd *cobra.Command, args []string) {
 		versionFlag, _ := cmd.Flags().GetBool("version")
 		if versionFlag {
+			// Basic version output for scripting.
 			fmt.Println(version)
+			// Extended metadata when verbose flag is also set.
+			if verbose {
+				info := build.Info()
+				fmt.Printf("commit: %s\n", info["commit"])
+				fmt.Printf("built: %s\n", info["date"])
+				fmt.Printf("builtBy: %s\n", info["builtBy"])
+			}
 			return
 		}
 
