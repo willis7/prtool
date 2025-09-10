@@ -1,4 +1,4 @@
-.PHONY: test build clean vet lint check ci
+.PHONY: test build clean vet lint check ci release snapshot
 
 # Default target
 all: check
@@ -59,6 +59,22 @@ check: tidy vet test lint
 
 # CI target - runs all checks and builds
 ci: check build
+
+# Release with GoReleaser (requires tag and GITHUB_TOKEN)
+release:
+	@if ! command -v goreleaser >/dev/null 2>&1; then \
+		echo "goreleaser not installed. Install with: go install github.com/goreleaser/goreleaser/v2@latest"; \
+		exit 1; \
+	fi
+	goreleaser release --clean
+
+# Snapshot release (no publish)
+snapshot:
+	@if ! command -v goreleaser >/dev/null 2>&1; then \
+		echo "goreleaser not installed. Install with: go install github.com/goreleaser/goreleaser/v2@latest"; \
+		exit 1; \
+	fi
+	goreleaser release --clean --snapshot --skip=publish,sign
 
 # Install golangci-lint (for development)
 install-lint:

@@ -1,0 +1,101 @@
+version: 2
+project_name: prtool
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: prtool
+    main: ./main.go
+    binary: prtool
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X github.com/willis7/prtool/cmd.version={{.Version}} -X github.com/willis7/prtool/internal/build.commit={{.Commit}} -X github.com/willis7/prtool/internal/build.date={{.Date}} -X github.com/willis7/prtool/internal/build.builtBy=goreleaser
+    flags:
+      - -trimpath
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+archives:
+  - id: archive
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+snapshot: {}
+
+release:
+  github:
+    owner: willis7
+    name: prtool
+  draft: false
+  prerelease: auto
+  name_template: "v{{ .Version }}"
+
+changelog:
+  sort: asc
+  use: git
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+env_files:
+  github_token: ~/.config/prtool/github_token # optional; override with GITHUB_TOKEN env in CI
+
+git:
+  tag_sort: "-version:refname"
+
+dist: dist
+
+report_sizes: true
+
+brews:
+  - name: prtool
+    repository:
+      owner: willis7
+      name: homebrew-tap
+    commit_author:
+      name: GitHub Actions
+      email: actions@github.com
+    homepage: https://github.com/willis7/prtool
+    description: CLI tool for summarizing GitHub pull requests with AI summaries.
+    license: MIT
+    test: |
+      system "#{bin}/prtool", "--version"
+    install: |
+      bin.install "prtool"
+
+milestones:
+  - close: true
+
+signs:
+  - cmd: cosign
+    artifacts: checksum
+    args:
+      - sign-blob
+      - --yes
+      - --output-signature
+      - ${signature}
+      - --output-certificate
+      - ${certificate}
+      - ${artifact}
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    signature: ${artifact}.sig
+    certificate: ${artifact}.pem
+    output: true
+
+  # SBOM generation removed (requires syft). Re-enable later if needed.
+
+  # docker_manifests removed until dockers_v2 images are configured
+
+announce:
+  skip: true

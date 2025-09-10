@@ -26,6 +26,16 @@ go build .
 
 Download the latest binary from the [releases page](https://github.com/willis7/prtool/releases).
 
+### From a Snapshot (local testing)
+
+You can build a snapshot using GoReleaser without publishing:
+
+```bash
+make snapshot
+```
+
+Artifacts will appear in `dist/` with a `dev-<commit>` version.
+
 ## Quick Start
 
 ### 1. Generate Configuration File
@@ -376,6 +386,51 @@ prtool --user=octocat --verbose --log-file=debug.log
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+## Release Process
+
+Releases are automated with [GoReleaser](https://goreleaser.com/).
+
+### Prerequisites
+
+- Ensure you have a clean git tree and all tests pass.
+- Install GoReleaser locally (optional for snapshot):
+  ```bash
+  go install github.com/goreleaser/goreleaser/v2@latest
+  ```
+
+### Create a Release
+
+1. Decide the next semantic version (e.g. `v0.2.0`).
+2. Update any docs if needed.
+3. Tag and push:
+   ```bash
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+4. GitHub Actions will run the release workflow and publish binaries, checksums, SBOM, and Homebrew formula.
+
+### Local Snapshot
+
+Generate unsigned snapshot artifacts locally without publishing:
+
+```bash
+make snapshot
+```
+
+### Full Local Release Dry Run
+
+```bash
+goreleaser release --snapshot --skip=publish,sign --clean
+```
+
+### Viewing Build Metadata
+
+```bash
+./prtool --version --verbose
+```
+
+This prints the version plus commit, build date, and builder.
 
 ## License
 
