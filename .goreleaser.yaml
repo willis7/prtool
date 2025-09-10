@@ -57,22 +57,6 @@ dist: dist
 
 report_sizes: true
 
-brews:
-  - name: prtool
-    repository:
-      owner: willis7
-      name: homebrew-tap
-    commit_author:
-      name: GitHub Actions
-      email: actions@github.com
-    homepage: https://github.com/willis7/prtool
-    description: CLI tool for summarizing GitHub pull requests with AI summaries.
-    license: MIT
-    test: |
-      system "#{bin}/prtool", "--version"
-    install: |
-      bin.install "prtool"
-
 milestones:
   - close: true
 
