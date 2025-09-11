@@ -30,16 +30,12 @@ jobs:
         with:
           cosign-release: "v2.4.0"
 
-      - name: Install GoReleaser
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
-          version: latest
-          distribution: goreleaser
-
-      - name: Run GoReleaser
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: goreleaser release --clean
 
       - name: Upload dist artifacts
         uses: actions/upload-artifact@v4
