@@ -16,15 +16,17 @@ A command-line tool that fetches GitHub pull requests (PRs) for a specified time
 
 ### From Source
 
+Requires Go 1.24 or later.
+
 ```bash
 git clone https://github.com/willis7/prtool.git
 cd prtool
-go build .
+go build -o prtool ./main.go
 ```
 
 ### Binary Releases
 
-Download the latest binary from the [releases page](https://github.com/willis7/prtool/releases).
+Download pre-built binaries for Linux, macOS, and Windows from the [releases page](https://github.com/willis7/prtool/releases).
 
 ### From a Snapshot (local testing)
 
@@ -100,7 +102,7 @@ prtool --user=octocat --llm-provider=openai --llm-api-key=sk-...
 # Use Ollama (local)
 prtool --user=octocat --llm-provider=ollama --llm-model=llama3.2
 
-# Skip AI summary generation (dry-run)
+# Skip AI summary generation (dry-run) - outputs PR data in table format
 prtool --user=octocat --dry-run
 ```
 
@@ -141,6 +143,36 @@ Then run simply:
 ```bash
 prtool
 ```
+
+## Logging
+
+prtool provides flexible logging options for different use cases:
+
+### Console Logging
+
+Use `--verbose` to enable detailed logging to the console:
+
+```bash
+prtool --user=octocat --verbose
+```
+
+### File Logging
+
+Log to a file using `--log-file`:
+
+```bash
+prtool --user=octocat --log-file=prtool.log
+```
+
+Combine with `--verbose` for both console and file logging:
+
+```bash
+prtool --user=octocat --verbose --log-file=prtool.log
+```
+
+### CI Mode Logging
+
+In CI environments, use `--ci` to suppress progress indicators while still allowing error logging.
 
 ## Configuration
 
@@ -200,11 +232,12 @@ export PRTOOL_VERBOSE="true"
 prtool --llm-provider=openai --llm-api-key=sk-xxx --llm-model=gpt-3.5-turbo
 ```
 
-Supported models:
+Supported models (defaults to `gpt-3.5-turbo` if not specified):
 
-- `gpt-3.5-turbo` (default)
+- `gpt-3.5-turbo`
 - `gpt-4`
 - `gpt-4-turbo`
+- Any other OpenAI model name
 
 ### Ollama (Local)
 
@@ -221,6 +254,11 @@ Then use with prtool:
 prtool --llm-provider=ollama --llm-model=llama3.2
 ```
 
+Supported models (defaults to `llama3.2` if not specified):
+
+- `llama3.2`
+- Any other Ollama model you've pulled locally
+
 ### Stub (Testing)
 
 ```bash
@@ -231,17 +269,18 @@ Returns a fixed summary for testing purposes.
 
 ## CI/CD Usage
 
-For automated environments, use the `--ci` flag:
+For automated environments and CI/CD pipelines, use the `--ci` flag:
 
 ```bash
 prtool --user=octocat --since=-7d --output=report.md --ci
 ```
 
-This mode:
+CI mode is designed for non-interactive environments and:
 
-- Suppresses progress indicators and spinners
+- Suppresses progress indicators and spinners that don't work well in CI logs
 - Uses clean exit codes (0 for success, 1 for failure)
-- Reduces verbose output for cleaner logs
+- Reduces verbose output for cleaner, more readable CI logs
+- Fails fast on configuration errors rather than prompting for input
 
 ## Commands
 
@@ -257,11 +296,18 @@ Generate a sample configuration file (`.prtool.yaml`) in the current directory.
 prtool init
 ```
 
+### `prtool completion [bash|zsh|fish|powershell]`
+
+Generate shell completion script for the specified shell.
+
 ### Version Commands
 
 ```bash
 # Show current version
 prtool --version
+
+# Show detailed version information including build metadata
+prtool --version --verbose
 
 # Check for latest version on GitHub
 prtool --version-check
