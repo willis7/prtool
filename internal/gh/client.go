@@ -60,8 +60,8 @@ func (c *RestClient) ListRepos(scope *config.Config) ([]*github.Repository, erro
 		return c.listUserRepos(scope.User)
 	} else if scope.Repo != "" {
 		return c.getSingleRepo(scope.Repo)
-	} else if scope.Team != "" {
-		return c.listTeamRepos(scope.Team)
+	} else if len(scope.Team) > 0 {
+		return c.listTeamsRepos(scope.Team)
 	}
 
 	return nil, fmt.Errorf("no valid scope specified (org, user, repo, or team required)")
@@ -175,29 +175,41 @@ func (c *RestClient) getSingleRepo(repo string) ([]*github.Repository, error) {
 	return []*github.Repository{repository}, nil
 }
 
-func (c *RestClient) listTeamRepos(team string) ([]*github.Repository, error) {
-	parts := strings.Split(team, "/")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("team must be in format 'org/team'")
+func (c *RestClient) listTeamsRepos(teams []string) ([]*github.Repository, error) {
+	repoMap := make(map[string]*github.Repository)
+
+	for _, team := range teams {
+		parts := strings.Split(team, "/")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("team must be in format 'org/team', got: %s", team)
+		}
+
+		org, teamSlug := parts[0], parts[1]
+
+		opts := &github.ListOptions{PerPage: 100}
+
+		for {
+			repos, resp, err := c.client.Teams.ListTeamReposBySlug(c.ctx, org, teamSlug, opts)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list repositories for team %s: %w", team, err)
+			}
+
+			for _, repo := range repos {
+				if repo.FullName != nil {
+					repoMap[*repo.FullName] = repo
+				}
+			}
+
+			if resp.NextPage == 0 {
+				break
+			}
+			opts.Page = resp.NextPage
+		}
 	}
 
-	org, teamSlug := parts[0], parts[1]
-
-	opts := &github.ListOptions{PerPage: 100}
-
 	var allRepos []*github.Repository
-	for {
-		repos, resp, err := c.client.Teams.ListTeamReposBySlug(c.ctx, org, teamSlug, opts)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list repositories for team %s: %w", team, err)
-		}
-
-		allRepos = append(allRepos, repos...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opts.Page = resp.NextPage
+	for _, repo := range repoMap {
+		allRepos = append(allRepos, repo)
 	}
 
 	return allRepos, nil

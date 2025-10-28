@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -265,7 +266,7 @@ func configsEqual(a, b *Config) bool {
 
 	return a.GitHubToken == b.GitHubToken &&
 		a.Org == b.Org &&
-		a.Team == b.Team &&
+		reflect.DeepEqual(a.Team, b.Team) &&
 		a.User == b.User &&
 		a.Repo == b.Repo &&
 		a.Since == b.Since &&

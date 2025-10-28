@@ -92,7 +92,7 @@ func TestMockClient_ListRepos(t *testing.T) {
 		{
 			name: "valid team scope",
 			scope: &config.Config{
-				Team: "org/team",
+				Team: []string{"org/team"},
 			},
 			mockRepos: []*github.Repository{
 				{Name: github.String("team-repo")},
