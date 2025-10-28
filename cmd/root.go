@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -52,6 +53,18 @@ for a specified time period and scope (organization, team, user, or repository),
 summarizes them using an LLM (OpenAI or Ollama), and outputs the result in Markdown format.`,
 }
 
+// parseTeams parses a comma-separated string of teams into a slice
+func parseTeams(teamStr string) []string {
+	if teamStr == "" {
+		return nil
+	}
+	teams := strings.Split(teamStr, ",")
+	for i, team := range teams {
+		teams[i] = strings.TrimSpace(team)
+	}
+	return teams
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
@@ -74,7 +87,7 @@ func init() {
 
 	// Scope flags (mutually exclusive)
 	rootCmd.Flags().StringVar(&org, "org", "", "GitHub organization")
-	rootCmd.Flags().StringVar(&team, "team", "", "GitHub team (format: org/team)")
+	rootCmd.Flags().StringVar(&team, "team", "", "GitHub team(s) (format: org/team or comma-separated: org/team1,org/team2)")
 	rootCmd.Flags().StringVar(&user, "user", "", "GitHub user")
 	rootCmd.Flags().StringVar(&repo, "repo", "", "GitHub repository (format: owner/repo)")
 
@@ -235,11 +248,17 @@ func GetConfig() (*config.Config, error) {
 	// Load from environment
 	envConfig := config.LoadFromEnv()
 
+	// Parse teams from comma-separated string
+	var teams []string
+	if team != "" {
+		teams = parseTeams(team)
+	}
+
 	// Create CLI config from flags
 	cliConfig := &config.Config{
 		GitHubToken: githubToken,
 		Org:         org,
-		Team:        team,
+		Team:        teams,
 		User:        user,
 		Repo:        repo,
 		Since:       since,
@@ -280,8 +299,13 @@ func generateMetadata(cfg *config.Config, prs []*model.PR) render.Metadata {
 	var scopeType, scopeValue string
 	if cfg.Org != "" {
 		scopeType, scopeValue = "organization", cfg.Org
-	} else if cfg.Team != "" {
-		scopeType, scopeValue = "team", cfg.Team
+	} else if len(cfg.Team) > 0 {
+		scopeType = "team"
+		if len(cfg.Team) == 1 {
+			scopeValue = cfg.Team[0]
+		} else {
+			scopeValue = strings.Join(cfg.Team, ", ")
+		}
 	} else if cfg.User != "" {
 		scopeType, scopeValue = "user", cfg.User
 	} else if cfg.Repo != "" {

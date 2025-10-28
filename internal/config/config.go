@@ -4,9 +4,28 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
+
+// TeamList represents a list of teams, supporting both string and []string in YAML
+type TeamList []string
+
+// UnmarshalYAML implements yaml.Unmarshaler to handle both string and []string
+func (t *TeamList) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	if err := unmarshal(&s); err == nil {
+		*t = []string{s}
+		return nil
+	}
+	var sl []string
+	if err := unmarshal(&sl); err != nil {
+		return err
+	}
+	*t = sl
+	return nil
+}
 
 // Config represents the complete configuration for prtool
 type Config struct {
@@ -14,10 +33,10 @@ type Config struct {
 	GitHubToken string `yaml:"github_token" env:"PRTOOL_GITHUB_TOKEN"`
 
 	// Scope configuration (mutually exclusive)
-	Org  string `yaml:"org" env:"PRTOOL_ORG"`
-	Team string `yaml:"team" env:"PRTOOL_TEAM"`
-	User string `yaml:"user" env:"PRTOOL_USER"`
-	Repo string `yaml:"repo" env:"PRTOOL_REPO"`
+	Org  string   `yaml:"org" env:"PRTOOL_ORG"`
+	Team TeamList `yaml:"team" env:"PRTOOL_TEAM"`
+	User string   `yaml:"user" env:"PRTOOL_USER"`
+	Repo string   `yaml:"repo" env:"PRTOOL_REPO"`
 
 	// Time range
 	Since string `yaml:"since" env:"PRTOOL_SINCE"`
@@ -73,10 +92,16 @@ func LoadFromFile(path string) (*Config, error) {
 
 // LoadFromEnv loads configuration from environment variables
 func LoadFromEnv() *Config {
+	teamEnv := os.Getenv("PRTOOL_TEAM")
+	var teams []string
+	if teamEnv != "" {
+		teams = parseTeams(teamEnv)
+	}
+
 	config := &Config{
 		GitHubToken: os.Getenv("PRTOOL_GITHUB_TOKEN"),
 		Org:         os.Getenv("PRTOOL_ORG"),
-		Team:        os.Getenv("PRTOOL_TEAM"),
+		Team:        teams,
 		User:        os.Getenv("PRTOOL_USER"),
 		Repo:        os.Getenv("PRTOOL_REPO"),
 		Since:       os.Getenv("PRTOOL_SINCE"),
@@ -113,7 +138,7 @@ func MergeConfig(cliConfig, envConfig, yamlConfig *Config) *Config {
 
 	// Scope configuration
 	merged.Org = firstNonEmpty(cliConfig.Org, envConfig.Org, yamlConfig.Org)
-	merged.Team = firstNonEmpty(cliConfig.Team, envConfig.Team, yamlConfig.Team)
+	merged.Team = firstNonEmptySlice(cliConfig.Team, envConfig.Team, yamlConfig.Team)
 	merged.User = firstNonEmpty(cliConfig.User, envConfig.User, yamlConfig.User)
 	merged.Repo = firstNonEmpty(cliConfig.Repo, envConfig.Repo, yamlConfig.Repo)
 
@@ -138,6 +163,18 @@ func MergeConfig(cliConfig, envConfig, yamlConfig *Config) *Config {
 	return merged
 }
 
+// parseTeams parses a comma-separated string of teams into a slice
+func parseTeams(teamStr string) []string {
+	if teamStr == "" {
+		return nil
+	}
+	teams := strings.Split(teamStr, ",")
+	for i, team := range teams {
+		teams[i] = strings.TrimSpace(team)
+	}
+	return teams
+}
+
 // firstNonEmpty returns the first non-empty string from the given values
 func firstNonEmpty(values ...string) string {
 	for _, v := range values {
@@ -156,4 +193,14 @@ func firstBool(values ...bool) bool {
 		}
 	}
 	return false
+}
+
+// firstNonEmptySlice returns the first non-empty slice from the given values
+func firstNonEmptySlice(values ...[]string) []string {
+	for _, v := range values {
+		if len(v) > 0 {
+			return v
+		}
+	}
+	return nil
 }

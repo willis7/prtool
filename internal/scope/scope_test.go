@@ -60,7 +60,7 @@ func TestResolveRepos(t *testing.T) {
 		{
 			name: "valid team scope",
 			cfg: &config.Config{
-				Team: "org/team",
+				Team: []string{"org/team"},
 			},
 			mockRepos: []*github.Repository{
 				{FullName: github.String("org/team-repo1")},
@@ -215,7 +215,7 @@ func TestValidateScope(t *testing.T) {
 		{
 			name: "valid team scope",
 			cfg: &config.Config{
-				Team: "org/team",
+				Team: []string{"org/team"},
 			},
 			expectError: false,
 		},
@@ -244,7 +244,7 @@ func TestValidateScope(t *testing.T) {
 			name: "all scopes should return error",
 			cfg: &config.Config{
 				Org:  "test-org",
-				Team: "org/team",
+				Team: []string{"org/team"},
 				User: "test-user",
 				Repo: "owner/repo",
 			},

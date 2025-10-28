@@ -26,7 +26,7 @@ func ResolveRepos(cfg *config.Config, ghClient gh.GitHubClient) ([]string, error
 		scopeCount++
 		scopeType = "org"
 	}
-	if cfg.Team != "" {
+	if len(cfg.Team) > 0 {
 		scopeCount++
 		scopeType = "team"
 	}
@@ -84,7 +84,7 @@ func ValidateScope(cfg *config.Config) error {
 		scopeCount++
 		scopes = append(scopes, "org")
 	}
-	if cfg.Team != "" {
+	if len(cfg.Team) > 0 {
 		scopeCount++
 		scopes = append(scopes, "team")
 	}

@@ -64,7 +64,7 @@ func (m *MockClient) ListRepos(scope *config.Config) ([]*github.Repository, erro
 	if scope.Repo != "" {
 		scopeCount++
 	}
-	if scope.Team != "" {
+	if len(scope.Team) > 0 {
 		scopeCount++
 	}
 
